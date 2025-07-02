@@ -1,0 +1,11 @@
+@use 'sass:color';
+
+@mixin flex-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+@mixin box-shadow($color: rgba(0, 0, 0, 0.2)) {
+    box-shadow: 0 2px 6px $color;
+}

@@ -1,0 +1,73 @@
+@use 'sass:color';
+@import '../../styles/main.scss';
+@import '../../styles/variables';
+
+.todo-container {
+  max-width: 700px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background-color: $gray-bg;
+  border-radius: 24px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 0 10px rgb(0, 0, 0, .1444);
+  
+
+
+  h1 {
+    text-align: center;
+    color: $primary-color;
+  }
+
+  .todo-input {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+
+    input {
+      flex: 1;
+      padding: 0.5rem;
+      border-radius: $todo-radius;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      background: $primary-color;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: $todo-radius;
+      cursor: pointer;
+
+      &:hover {
+        background-color: darken($primary-color, 10%);
+      }
+    }
+  }
+
+  .todo-item {
+    background: white;
+    border-left: 4px solid $primary-color;
+    padding: 0.8rem;
+    margin-bottom: 0.8rem;
+    border-radius: $todo-radius;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    .delete-btn {
+      color: $danger-color;
+      cursor: pointer;
+      font-weight: bold;
+      margin-left: 1rem;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+
+    .todo-text {
+      flex: 1;
+    }
+  }
+}
