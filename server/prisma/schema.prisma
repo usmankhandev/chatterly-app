@@ -14,13 +14,13 @@ model User {
   email    String   @unique
   password String
   createdAt DateTime @default(now())
-  posts    Post[]
+  // posts    Post[]
 }
 
-model Post {
-  id        String   @id @default(uuid())
-  content   String
-  createdAt DateTime @default(now())
-  author    User     @relation(fields: [authorId], references: [id])
-  authorId  String
-}
+// model Post {
+//   id        String   @id @default(uuid())
+//   content   String
+//   createdAt DateTime @default(now())
+//   author    User     @relation(fields: [authorId], references: [id])
+//   authorId  String
+// }
