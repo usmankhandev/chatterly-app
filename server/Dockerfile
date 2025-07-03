@@ -6,7 +6,7 @@ FROM node:20-alpine
 WORKDIR /app
 
 # Installing dependencies
-COPY Package*.json ./
+COPY package*.json ./
 RUN npm install
 
 # Copying the rest of the code
