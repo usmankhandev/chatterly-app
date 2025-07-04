@@ -1,5 +1,6 @@
 import { userModel } from './user.model';
 
+
 export const UserService = {
     createUser: async (data: {name: string, email: string, password: string}) => {
         return userModel.create({data});
