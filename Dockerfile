@@ -14,7 +14,9 @@ RUN npm install
 COPY server/. .
 
 # Building Prisma Client
-RUN npx prisma generate --schema=./prisma/schema.prisma
+# RUN npx prisma generate deploy --schema=./prisma/schema.prisma
+RUN npx prisma migrate deploy --schema=./prisma/schema.prisma
+
 
 # Exposing the port the app runs on
 EXPOSE 3001

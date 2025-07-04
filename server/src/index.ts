@@ -1,37 +1,22 @@
 // src/index.ts
+import { loadEnv } from './utils/env-loader';
 
-import dotenv from 'dotenv';
-import path from 'path';
+// Load environment FIRST
+const env = loadEnv();
 
-
-const resolvedEnvPath = process.env.NODE_ENV === 'production'
-  ? path.join(__dirname, '../.env')
-  : path.join(__dirname, '../.env.local');
-
-dotenv.config({path: resolvedEnvPath});
-
-console.log(`Loaded env: ${resolvedEnvPath}`);
-console.log(`loaded DB_URL: ${process.env.DATABASE_URL}`);
-
-
-// application entry point
-
+// Now import other modules
 import app from './app';
 import prisma from './config/prismaClient';
 
 prisma.$connect()
   .then(() => {
-    console.log('✅ Connected to the database successfully');
+    const PORT = env.PORT || 3001;
+    app.listen(PORT, () => {
+      console.log(`DATABASE_URL:: ${env.DATABASE_URL}`);
+      console.log(`🚀 Server running on http://localhost:${PORT}`);
+    });
   })
   .catch((error) => {
-    console.error('❌ Failed to connect to the database:', error);
-    process.exit(1); // Exit the process if the database connection fails 
+    console.error('❌ Database connection failed:', error);
+    process.exit(1);
   });
-
-
-const PORT = process.env.PORT || 3001;
-
-app.listen(PORT, () => {
-  console.log(`🚀 Chatterly backend is live on http://localhost:${PORT}`);
-});
-
