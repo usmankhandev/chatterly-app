@@ -1,26 +1,16 @@
-# Using official Node.js LTS image
-
 FROM node:20-alpine
 
-# Set the working directory inside the container
 WORKDIR /app
 
-# Copying package.json and prisma files from server directory
-COPY server/package.json ./package.json
-COPY server/prisma ./prisma
+COPY package.json package-lock.json* ./
 RUN npm install
 
-# Copying the rest of the code
-COPY server/. .
+COPY prisma ./prisma
+COPY tsconfig.json ./
+COPY src ./src
 
-# Building Prisma Client
-# RUN npx prisma generate deploy --schema=./prisma/schema.prisma
-RUN npx prisma migrate deploy --schema=./prisma/schema.prisma
+RUN npx prisma generate --schema=./prisma/schema.prisma
 
-
-# Exposing the port the app runs on
 EXPOSE 3001
 
-# Starting the application
-CMD ["npm", "run", "dev"]
-
+CMD ["sh", "-c", "npx prisma migrate deploy --schema=./prisma/schema.prisma && npm run start"]
