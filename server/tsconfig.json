@@ -8,7 +8,9 @@
     "strict": true,                                      /* Enable all strict type-checking options. */
     "skipLibCheck": true,
     "rootDir": "./src",                              /* Specify the root directory of input files. Use to control the output directory structure with --outDir. */
-    "outDir": "./dist",                                /* Specify an output folder for all emitted files. */
-    
+    "outDir": "./dist",
+    "typeRoots": ["./node_modules/@types", "./src/types"],
+    "types": ["node"]
+      
   }
 }
