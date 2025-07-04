@@ -10,11 +10,6 @@ COPY server/prisma ./prisma
 COPY server/tsconfig.json ./
 COPY server/src ./src
 
-# Copy the production .env file
-COPY server/.env.production ./.env.production
-
-
-
 RUN npx prisma generate --schema=./prisma/schema.prisma
 
 EXPOSE 3001
