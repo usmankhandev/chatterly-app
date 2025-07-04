@@ -3,23 +3,24 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "NODE_ENV=development tsx src/index.ts",
-    "build": "tsc",
-    "start": "node dist/index.js",
-    "migrate:dev": "dotenv -e ./.env.local -- prisma migrate dev --schema=./prisma/schema.prisma"
+    "start": "NODE_ENV=production tsx src/index.ts",
+    "migrate:dev": "dotenv -e .env.development -- prisma migrate dev --schema=./prisma/schema.prisma",
+    "migrate:deploy": "dotenv -e .env.production -- prisma migrate deploy --schema=./prisma/schema.prisma"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@prisma/client": "^6.11.0",
+    "@prisma/client": "^6.11.1",
     "cors": "^2.8.5",
     "dotenv": "^17.0.1",
+    "dotenv-expand": "^12.0.2",
+    "dotenv-flow": "^4.1.0",
     "express": "^5.1.0",
     "pg": "^8.16.3",
-    "prisma": "^6.11.0"
+    "prisma": "^6.11.1"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
