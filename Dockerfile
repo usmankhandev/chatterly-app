@@ -14,4 +14,4 @@ RUN npx prisma generate --schema=./prisma/schema.prisma
 
 EXPOSE 3001
 
-CMD ["sh", "-c", "npx prisma db push --accept-data-loss --schema=./prisma/schema.prisma && npm start"]
+CMD ["sh", "-c", "npx prisma migrate deploy --schema=./prisma/schema.prisma && npm start"]
