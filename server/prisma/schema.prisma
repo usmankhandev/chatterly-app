@@ -15,5 +15,16 @@ model User {
   bio      String?
   address  String?
   password String
+  posts    Post[]
   createdAt DateTime @default(now())
+}
+
+model Post {
+  id       String @id @default(uuid())
+  title    String
+  content  String
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  @@index([authorId]) // Performance optimization
 }
