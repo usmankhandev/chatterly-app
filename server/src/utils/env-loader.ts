@@ -22,18 +22,22 @@ export function loadEnv(): EnvironmentConfig {
 
     console.log(`✅ Loaded environment from ${envPath}`);
   } else {
-    console.log('✅ Using Railway or system environment variables in production');
+    console.log(
+      '✅ Using Railway or system environment variables in production',
+    );
   }
 
   const { DATABASE_URL, PORT } = process.env;
 
   if (!DATABASE_URL) {
-    throw new Error(`❌ DATABASE_URL is missing (from env or system variables)`);
+    throw new Error(
+      `❌ DATABASE_URL is missing (from env or system variables)`,
+    );
   }
 
   return {
     DATABASE_URL,
     PORT: PORT || '3001',
-    NODE_ENV: nodeEnv
+    NODE_ENV: nodeEnv,
   };
 }
