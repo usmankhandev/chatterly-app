@@ -8,20 +8,22 @@ async function runMigrations() {
   const prisma = new PrismaClient({
     datasources: {
       db: {
-        url: env.DATABASE_URL
-      }
-    }
+        url: env.DATABASE_URL,
+      },
+    },
   });
 
   try {
-    console.log(`Running migrations on: ${env.DATABASE_URL.split('@')[0]}@******`);
+    console.log(
+      `Running migrations on: ${env.DATABASE_URL.split('@')[0]}@******`,
+    );
     await prisma.$connect();
-    
+
     if (process.env.NODE_ENV === 'development') {
       await prisma.$executeRaw`CREATE DATABASE IF NOT EXISTS chatterly`;
       console.log('✅ Development database ready');
     }
-    
+
     await prisma.$executeRaw`PRISMA MIGRATION COMMAND HERE`;
     console.log('✅ Migrations completed successfully');
   } catch (error) {
