@@ -7,10 +7,13 @@ const env = loadEnv();
 const prisma = new PrismaClient({
   datasources: {
     db: {
-      url: env.DATABASE_URL
-    }
+      url: env.DATABASE_URL,
+    },
   },
-  log: process.env.NODE_ENV === 'development' ? ['query', 'info', 'warn', 'error'] : ['error']
+  log:
+    process.env.NODE_ENV === 'development'
+      ? ['query', 'info', 'warn', 'error']
+      : ['error'],
 });
 
 export default prisma;

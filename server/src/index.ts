@@ -8,7 +8,8 @@ const env = loadEnv();
 import app from './app';
 import prisma from './config/prismaClient';
 
-prisma.$connect()
+prisma
+  .$connect()
   .then(() => {
     const PORT = env.PORT || 3001;
     app.listen(PORT, () => {

@@ -7,7 +7,7 @@ const userMock = {
 };
 
 const prisma = {
-    user: userMock,
-}
+  user: userMock,
+};
 
 export default prisma;
