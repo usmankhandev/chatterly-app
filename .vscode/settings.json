@@ -1,0 +1,38 @@
+// Prettier Formatting Rules
+{
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true,
+  "editor.formatOnPaste": true,
+  "editor.formatOnType": true,
+
+  // ESLint rules for linting the code.
+
+  "eslint.enable": true,
+  "eslint.validate": ["javascript", "typescript"],
+  "editor.codeActionsOnSave": {
+    "source.fixAll": true,
+    "source.fixAll.eslint": true
+  },
+
+  // Tailwind CSS Intellisense;
+
+  "tailwindCSS.includeLanguages": {
+    "typescript": "html",
+    "typescriptreact": "javascript"
+  },
+
+  // Indentation rules
+
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "editor.detectIndentation": false,
+
+  // Language specific overrides;
+
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  }
+}
