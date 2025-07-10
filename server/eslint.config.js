@@ -33,7 +33,6 @@ export default [
       prettier: prettierPlugin,
     },
     rules: {
-      'no-console': 'warn',
       'prettier/prettier': 'error',
       '@typescript-eslint/await-thenable': 'error',
     },
