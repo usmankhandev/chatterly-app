@@ -1,19 +1,14 @@
-// src/index.ts
 import { loadEnv } from './utils/env-loader';
-
-// Load environment FIRST
-const env = loadEnv();
-
-// Now import other modules
+loadEnv();
 import app from './app';
 import prisma from './config/prismaClient';
 
 prisma
   .$connect()
   .then(() => {
-    const PORT = env.PORT || 3001;
+    const PORT = process.env.PORT || 3001;
     app.listen(PORT, () => {
-      console.log(`DATABASE_URL:: ${env.DATABASE_URL}`);
+      console.log(`DATABASE_URL:: ${process.env.DATABASE_URL}`);
       console.log(`🚀 Server running on http://localhost:${PORT}`);
     });
   })

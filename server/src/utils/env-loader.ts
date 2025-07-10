@@ -1,43 +1,61 @@
-// server/src/utils/env-loader.ts
 import dotenv from 'dotenv';
 import path from 'path';
+import { fileURLToPath } from 'url';
 
 interface EnvironmentConfig {
+  NODE_ENV: string;
   DATABASE_URL: string;
   PORT: string;
-  NODE_ENV: string;
 }
 
-export function loadEnv(): EnvironmentConfig {
-  const nodeEnv = process.env.NODE_ENV || 'development';
+interface Success<Type> {
+  success: true;
+  data: Type;
+}
 
-  // Load .env file ONLY in non-production environments
-  if (nodeEnv !== 'production') {
-    const envPath = path.resolve(__dirname, `../../.env.${nodeEnv}`);
-    const result = dotenv.config({ path: envPath });
+interface Failure {
+  success: false;
+  error: string;
+}
 
-    if (result.error) {
-      throw new Error(`❌ Failed to load environment file at ${envPath}`);
+type Result<Type> = Success<Type> | Failure;
+
+export function loadEnv(): Result<EnvironmentConfig> {
+  const environment = process.env.NODE_ENV || 'development';
+
+  try {
+    if (environment !== 'production') {
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = path.dirname(__filename);
+      const envFilePath = path.resolve(__dirname, `../../.env.${environment}`);
+      const result = dotenv.config({ path: envFilePath });
+      if (result.error) {
+        return {
+          success: false,
+          error: `Failed to load environment variables file: ${result.error.message}`,
+        };
+      }
     }
 
-    console.log(`✅ Loaded environment from ${envPath}`);
-  } else {
-    console.log(
-      '✅ Using Railway or system environment variables in production',
-    );
+    const { DATABASE_URL, NODE_ENV, PORT } = process.env;
+    if (!DATABASE_URL) {
+      return {
+        success: false,
+        error: `Database is required but not found in environment variables`,
+      };
+    }
+    return {
+      success: true,
+      data: {
+        NODE_ENV: NODE_ENV || 'development',
+        DATABASE_URL,
+        PORT: PORT || '3001',
+      },
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown Error Occurred',
+    };
   }
-
-  const { DATABASE_URL, PORT } = process.env;
-
-  if (!DATABASE_URL) {
-    throw new Error(
-      `❌ DATABASE_URL is missing (from env or system variables)`,
-    );
-  }
-
-  return {
-    DATABASE_URL,
-    PORT: PORT || '3001',
-    NODE_ENV: nodeEnv,
-  };
 }

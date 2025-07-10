@@ -2,12 +2,12 @@
 import { PrismaClient } from '@prisma/client';
 import { loadEnv } from '../utils/env-loader';
 
-const env = loadEnv();
+loadEnv();
 
 const prisma = new PrismaClient({
   datasources: {
     db: {
-      url: env.DATABASE_URL,
+      url: process.env.DATABASE_URL,
     },
   },
   log:
