@@ -9,6 +9,7 @@ prisma
     const PORT = process.env.PORT || 3001;
     app.listen(PORT, () => {
       console.log(`DATABASE_URL:: ${process.env.DATABASE_URL}`);
+      console.log(`Node_ENV: ${process.env.NODE_ENV}`);
       console.log(`🚀 Server running on http://localhost:${PORT}`);
     });
   })
