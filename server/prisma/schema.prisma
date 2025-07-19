@@ -9,22 +9,209 @@ datasource db {
 }
 
 model User {
-  id       String   @id @default(uuid())
-  name     String
-  email    String   @unique
+  id   String   @id @default(cuid())
+  firstname String?
+  lastname String?
+  password String 
+  email String @unique
+  username String @unique
   bio      String?
-  address  String?
-  password String
-  posts    Post[]
+  profilePicture String?
+  coverPhoto String?
+  isEmailVerified Boolean @default(false)
+
+  // Relations
+
+  posts Post[]
+  comments Comment[]
+  likes Like[]
+  notifications Notification[]
+  actorNotification Notification[] @relation("NotificationActor")
+  sentFriendRequests FriendShip[] @relation("FriendshipRequester")
+  receivedRequests FriendShip[] @relation("FriendshipReceiver")
+  visibility Visibility @default(PUBLIC)
+
+  // Dates
   createdAt DateTime @default(now())
+  deletedAt DateTime?
+  updatedAt DateTime? @updatedAt
+
+  // indexing
+
+  @@index([firstname, lastname])
+  @@index([username, email])
+  @@index([username])
+  @@index([email])
+  
 }
 
+
 model Post {
-  id       String @id @default(uuid())
-  title    String
+
+  id       String @id @default(cuid())
+  title    String?
   content  String
+  imageUrl String?
   authorId String
-  author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  visibility Visibility @default(PUBLIC)
+
+  // Dates
+
   createdAt DateTime @default(now())
+  updatedAt DateTime? @updatedAt
+  deletedAt DateTime? 
+
+  //relations  
+  author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  comments Comment[] 
+  notifications Notification[]
+  likes Like[]
+  
+
+  // indexing
   @@index([authorId]) // Performance optimization
+  @@index([createdAt, authorId])
+  @@index([title, createdAt])
+  @@index([visibility, createdAt])
+  @@index([createdAt])
+
+}
+
+model Comment {
+  id String @id @default(cuid())
+  content String
+  imageUrl String?
+  authorId String
+  postId String
+  visibility Visibility @default(PUBLIC)
+
+  // Dates
+  createdAt DateTime @default(now())
+  updatedAt DateTime? @updatedAt
+  deletedAt DateTime?
+
+  // relations
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  likes Like[]
+  notifications Notification[]
+
+  // indexing
+
+  @@index([postId, id])
+  @@index([authorId, id])
+  @@index([createdAt, id])
+}
+
+model Like {
+  id String @id @default(cuid())
+  authorId String
+  postId String?
+  commentId String?
+  // visibility Visibility @default(PUBLIC)
+
+
+  // Relations
+
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  post Post? @relation(fields: [postId], references: [id], onDelete: Cascade)
+  comment Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  
+
+  // Dates
+
+  createdAt DateTime @default(now())
+  deletedAt DateTime?
+
+  // Indexing
+
+  @@unique([authorId, postId], name:"unique_post_like")
+  @@unique([authorId, commentId], name:"unique_comment_like")
+  @@index([postId])
+  @@index([commentId])
+  @@index([authorId])
+}
+
+model Notification {
+  id String @id @default(cuid())
+  type NotificationType
+  content String
+  userId String
+  actorId String?
+  postId String?
+  commentId String?
+  friendshipId String?
+  isRead Boolean @default(false)
+
+  // Relations
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  actor User? @relation("NotificationActor", fields: [actorId], references: [id], onDelete: Cascade)
+  post Post? @relation(fields: [postId], references: [id], onDelete: Cascade)
+  comment Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  friendship FriendShip? @relation(fields: [friendshipId], references: [id], onDelete: Cascade)
+
+
+  // Dates
+
+  createdAt DateTime @default(now())
+  deletedAt DateTime?
+  
+  // Indexing
+
+  @@index([userId, isRead])
+  @@index([userId, createdAt])
+}
+
+// Friendship System:
+
+model FriendShip {
+  id String @id @default(cuid())
+  requesterId String
+  receiverId String
+  status FriendshipStatus @default(PENDING)
+
+  // relations
+
+  requester User @relation("FriendshipRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  receiver User @relation("FriendshipReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  notifications Notification[]
+
+  // Dates
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([requesterId, receiverId])
+  @@index([requesterId, status])
+  @@index([receiverId, status])
+}
+
+
+// Enums
+
+enum Visibility {
+  PUBLIC
+  FRIENDSONLY
+  PRIVATE
+}
+
+enum FriendshipStatus {
+  ACCEPTED
+  DECLINED
+  PENDING
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DEACTIVATED
+}
+
+enum NotificationType {
+  POST_LIKE
+  COMMENT_LIKE
+  POST_COMMENT
+  FRIEND_REQUEST
+  FRIEND_ACCEPT
 }
