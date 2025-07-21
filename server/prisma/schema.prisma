@@ -12,13 +12,61 @@ model User {
   id   String   @id @default(cuid())
   firstname String?
   lastname String?
-  password String 
   email String @unique
   username String @unique
   bio      String?
   profilePicture String?
   coverPhoto String?
+
+  // user auth 
+
+  // 1. Password Security
+  passwordHash String
+  passwordSalt String?
+  passwordHistory Json?
+  lastPasswordChange DateTime?
+  passwordResetToken String?
+  passwordResetExpires DateTime?
+
+  // 2. Email verification and communication
+
   isEmailVerified Boolean @default(false)
+  emailVerificationToken String?
+  emailVerificationExprires String?
+  pendingEmail String? // for later email change verification
+
+  // 3. Account security and status
+
+  accountStatus UserStatus @default(ACTIVE)
+  loginAttempts Int @default(0)
+  lockedUntil DateTime?
+  lastLoginAt DateTime?
+  lastKnownIp String?
+  lastKnownLocation String?
+
+  // 4. JWT & Session Management
+
+  refreshTokenHash String?
+  refreshTokenExpires DateTime?
+  jwtVersion Int @default(0) // for token invalidation
+  sessionMetadata Json?
+
+  // 5. Multi-Factor Authentication
+
+  mfaEnabled Boolean @default(false)
+  mfaSecret String? 
+  backupCodes Json?
+  smsPhone String?
+  trustedDevices Json?
+  mfaMethods MfaType[]
+
+  // 6. Security and Audit Trail
+
+  securityEvents Json?
+  failedLoginAttempts Json?
+  twoFactorBackupUsed DateTime?
+
+
 
   // Relations
 
@@ -30,6 +78,7 @@ model User {
   sentFriendRequests FriendShip[] @relation("FriendshipRequester")
   receivedRequests FriendShip[] @relation("FriendshipReceiver")
   visibility Visibility @default(PUBLIC)
+  socialAccounts SocialAccount[]
 
   // Dates
   createdAt DateTime @default(now())
@@ -42,6 +91,11 @@ model User {
   @@index([username, email])
   @@index([username])
   @@index([email])
+  @@index([passwordResetToken])
+  @@index([emailVerificationToken])
+  @@index([accountStatus, createdAt])
+  @@index([lastLoginAt])
+  @@index([mfaEnabled, accountStatus])
   
 }
 
@@ -188,6 +242,39 @@ model FriendShip {
 }
 
 
+model SocialAccount {
+
+  id String @id @default(cuid())
+  userId String
+  provider SocialProvider
+  providerAccountId String
+  providerEmail String?
+  accessToken String?
+  refreshToken String?
+  tokenExpires DateTime?
+  scope String?
+  providerData Json?
+
+  // Dates
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // relations:
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // constraints
+
+  @@unique([provider, providerAccountId])
+  @@unique([userId, provider])
+  @@index([userId])
+  @@index([provider])
+
+
+
+}
+
 // Enums
 
 enum Visibility {
@@ -203,9 +290,12 @@ enum FriendshipStatus {
 }
 
 enum UserStatus {
+
   ACTIVE
   SUSPENDED
   DEACTIVATED
+  PENDING_VERIFICATION
+  LOCKED
 }
 
 enum NotificationType {
@@ -214,4 +304,27 @@ enum NotificationType {
   POST_COMMENT
   FRIEND_REQUEST
   FRIEND_ACCEPT
+}
+
+enum SocialProvider {
+  
+  GOOGLE
+  GITHUB
+  FACEBOOK
+  TWITTER
+  LINKEDIN
+  APPLE
+  MICROSOFT
+
+}
+
+enum MfaType {
+
+  TOTP
+  SMS
+  EMAIL
+  BACK_CODES
+  HARDWARE_KEY
+  PUSH
+
 }
