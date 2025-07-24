@@ -1,9 +1,8 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
-import { User, MfaType } from '@prisma/client';
-import { ApiError } from '../api-error';
-import { access } from 'fs';
+import { User } from '@prisma/client';
+import { ApiError } from './api-error.utils';
 
 interface JWTConfig {
   accessTokenSecret: string;
@@ -15,7 +14,6 @@ interface JWTConfig {
 export interface JWTBasePayload {
   userId: string;
   jwtVersion: number;
-  role: string;
   email: string;
 }
 
@@ -107,7 +105,6 @@ export class TokenUtils {
     userId: string,
     jwtVersion: number,
     email: string,
-    role: string,
   ): string {
     const config = this.getJWTConfig();
     const payload: AccessTokenPayload = {
@@ -115,7 +112,6 @@ export class TokenUtils {
       jwtVersion,
       type: 'access',
       email,
-      role,
     };
     return jwt.sign(payload, config.accessTokenSecret, {
       expiresIn: config.accessTokenExpire,
@@ -128,7 +124,6 @@ export class TokenUtils {
     userId: string,
     jwtVersion: number,
     email: string,
-    role: string,
   ): string {
     const config = this.getJWTConfig();
     const payload: RefresTokenPayload = {
@@ -136,7 +131,6 @@ export class TokenUtils {
       jwtVersion,
       type: 'refresh',
       email,
-      role,
     };
     return jwt.sign(payload, config.refreshTokenSecret, {
       expiresIn: config.refreshTokenExpire,
@@ -158,6 +152,7 @@ export class TokenUtils {
       }
       return decoded;
     } catch (error) {
+      if (error instanceof ApiError) throw error;
       throw new ApiError('Invalid or Expired Access Token', 401);
     }
   }
@@ -174,6 +169,7 @@ export class TokenUtils {
       }
       return decoded;
     } catch (error) {
+      if (error instanceof ApiError) throw error;
       throw new ApiError('Invalid or Expired Access Token', 401);
     }
   }
@@ -226,4 +222,25 @@ export class SecurityUtils {
       .replace(/[+/]/g, '')
       .substring(0, 32);
   }
+
+  // validateEmailDomain
+
+  static isValidEmailDomain(email: string): boolean {
+    const disposableDomains = [
+      '10minuteemail.com',
+      'guerrillamail.com',
+      'mailinator.com',
+      'tempmail.org',
+      'throwaway.email',
+    ];
+
+    const domain = email.split('@')[1]?.toLowerCase();
+    return domain ? !disposableDomains.includes(domain) : false;
+  }
+
+  // createSecurityEvent
+
+  // exractDeviceInfo
+
+  // Rate limiting utility class
 }
