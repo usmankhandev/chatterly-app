@@ -32,7 +32,7 @@ model User {
 
   isEmailVerified Boolean @default(false)
   emailVerificationToken String?
-  emailVerificationExprires String?
+  emailVerificationExpires String?
   pendingEmail String? // for later email change verification
 
   // 3. Account security and status

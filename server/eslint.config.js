@@ -35,6 +35,13 @@ export default [
     rules: {
       'prettier/prettier': 'error',
       '@typescript-eslint/await-thenable': 'error',
+      '@typescript-eslint/no-unused-vars': [
+        'warn',
+        {
+          varsIgnorePattern: '^_',
+          argsIgnorePattern: '^_',
+        },
+      ],
     },
   },
 
