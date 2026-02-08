@@ -1,13 +1,5 @@
-const userMock = {
-  create: jest.fn(),
-  findMany: jest.fn(),
-  findUnique: jest.fn(),
-  update: jest.fn(),
-  delete: jest.fn(),
-};
+import { PrismaClient } from '@prisma/client';
+import { mockDeep } from 'jest-mock-extended';
 
-const prisma = {
-  user: userMock,
-};
-
-export default prisma;
+export const prismaMock = mockDeep<PrismaClient>();
+export default prismaMock;

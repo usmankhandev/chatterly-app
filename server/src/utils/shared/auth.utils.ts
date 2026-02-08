@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { User } from '@prisma/client';
 import { ApiError } from './api-error.utils';
+import { authenticator } from 'otplib';
 
 interface JWTConfig {
   accessTokenSecret: string;
@@ -25,9 +26,10 @@ export interface RefresTokenPayload extends JWTBasePayload {
   type: 'refresh';
 }
 
-// Password related utils
+// Password Utils Class
 
 export class PasswordUtils {
+  // Hashing password.
   static async hashPassword(
     password: string,
   ): Promise<{ hash: string; salt: string }> {
@@ -40,6 +42,8 @@ export class PasswordUtils {
     };
   }
 
+  // Verifying password against hash.
+
   static async verifyPassword(
     password: string,
     hash: string,
@@ -47,6 +51,7 @@ export class PasswordUtils {
     return bcrypt.compare(password, hash);
   }
 
+  // Validate password strength
   static validatePasswordStrength(password: string): {
     isValid: boolean;
     score: number;
@@ -74,7 +79,7 @@ export class PasswordUtils {
       feedback,
     };
   }
-
+  // Generate a secure random password
   static generateSecurePassword(length: number = 12): string {
     const charset =
       'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*(){}:"<>?';
@@ -87,7 +92,7 @@ export class PasswordUtils {
   }
 }
 
-// Token Utils
+// Token Utils Class
 
 export class TokenUtils {
   private static getJWTConfig(): JWTConfig {
@@ -113,11 +118,7 @@ export class TokenUtils {
       type: 'access',
       email,
     };
-    return jwt.sign(payload, config.accessTokenSecret, {
-      expiresIn: config.accessTokenExpire,
-      issuer: 'chatterly-api',
-      audience: 'chatterly-users',
-    });
+    return jwt.sign(payload, config.accessTokenSecret);
   }
 
   static generateRefreshToken(
@@ -132,11 +133,7 @@ export class TokenUtils {
       type: 'refresh',
       email,
     };
-    return jwt.sign(payload, config.refreshTokenSecret, {
-      expiresIn: config.refreshTokenExpire,
-      issuer: 'chatterly-api',
-      audience: 'chatterly-users',
-    });
+    return jwt.sign(payload, config.refreshTokenSecret);
   }
 
   static verifyAccessToken(token: string): AccessTokenPayload {
@@ -191,6 +188,18 @@ export class TokenUtils {
   ): Promise<boolean> {
     return bcrypt.compare(token, hash);
   }
+
+  static generateTotpSecret(): string {
+    return authenticator.generateSecret();
+  }
+
+  static generateOtpAuthUrl(email: string, secret: string): string {
+    return authenticator.keyuri(email, 'Chatterly', secret);
+  }
+
+  static verifyTotpCode(secret: string, token: string): boolean {
+    return authenticator.verify({ token, secret });
+  }
 }
 
 // Security Utils
@@ -240,7 +249,53 @@ export class SecurityUtils {
 
   // createSecurityEvent
 
+  static createSecurityEvent(
+    type: string,
+    description: string,
+    ipAddres?: string,
+    userAgent?: string,
+    metaData?: Record<string, any>,
+  ) {
+    return {
+      type,
+      description,
+      timestamp: new Date().toISOString(),
+      ipAddres,
+      userAgent,
+      ...metaData,
+    };
+  }
   // exractDeviceInfo
+}
 
-  // Rate limiting utility class
+// Rate limiting utility class
+
+export class RateLimitUtils {
+  // Create rate limit key for different operations
+
+  static createRateLimitKey(operation: string, identifier: string): string {
+    return `rate_limit:${operation}:${identifier}`;
+  }
+
+  // Get rate limit configuration for different operations
+
+  static getRateLimitConfig(operation: string): {
+    attempts: number;
+    windowMs: number;
+  } {
+    const configs = {
+      login: { attempts: 5, windowMs: 15 * 60 * 1000 },
+      register: { attempts: 3, windowMs: 60 * 60 * 1000 },
+      password_reset: { attempts: 3, windowMs: 30 * 60 * 1000 },
+      email_verification: { attempts: 5, windowMs: 60 * 60 * 1000 },
+      mfa_verify: { attempts: 5, windowMs: 15 * 60 * 1000 },
+    };
+
+    return (
+      configs[operation as keyof typeof configs] || {
+        attempts: 10,
+        windowMs: 60 * 60 * 1000,
+      }
+    );
+  }
 }
