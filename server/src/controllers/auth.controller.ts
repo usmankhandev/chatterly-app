@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import bcrypt from 'bcrypt';
 import {
   userLogin,
   userRegister,
@@ -413,7 +414,20 @@ export class AuthController {
     }
   }
 
-  // // // token generation and hashing
+  // token generation and hashing
 
-  // // async hashRefreshToken() {}
+  // async hashRefreshToken() {}
+
+  static async hashRefreshToken(req: Request): Promise<void> {
+    const { refreshToken } = req.body._refreshTokenHash;
+    const saltRounds = 10;
+    try {
+      // Hash the refresh token using bcrypt
+      const hashedToken = await bcrypt.hash(refreshToken, saltRounds);
+      return hashedToken;
+    } catch (error) {
+      console.error('Error hashing refresh token:', error);
+      throw new Error('Hashing failed');
+    }
+  }
 }
