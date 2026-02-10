@@ -1,11 +1,22 @@
 import { Server as HttpServer } from 'http';
 import { Server, Socket } from 'socket.io';
+import { Notification } from '@prisma/client';
 import { TokenUtils } from '../utils/shared/auth.utils';
 import { presenceService } from '../services/presence.service';
 
 interface ConnectedUser {
   socketId: string;
   userId: string;
+}
+
+interface CommentData {
+  id: string;
+  [key: string]: unknown;
+}
+
+interface LikeData {
+  id: string;
+  [key: string]: unknown;
 }
 
 export class SocketServer {
@@ -38,7 +49,7 @@ export class SocketServer {
         socket.data.email = decoded.email;
 
         next();
-      } catch (error) {
+      } catch {
         next(new Error('Invalid token'));
       }
     });
@@ -91,9 +102,22 @@ export class SocketServer {
       });
 
       // Marking notification as read via socket
-
       socket.on('notification:read', (notificationId: string) => {
         console.log(`User ${userId} read notification: ${notificationId}`);
+        // Broadcast to all connections of this user
+        this.broadcastNotificationRead(userId, notificationId);
+      });
+
+      // Handle notification deletion
+      socket.on('notification:delete', (notificationId: string) => {
+        console.log(`User ${userId} deleted notification: ${notificationId}`);
+        this.broadcastNotificationDeleted(userId, notificationId);
+      });
+
+      // Fetch unread notifications count
+      socket.on('notification:get-unread-count', async () => {
+        // This will be handled by the notification service
+        console.log(`User ${userId} requested unread count`);
       });
     });
     console.log(`Socket.io server initialized`);
@@ -136,12 +160,14 @@ export class SocketServer {
   /**
    * Send notification to a specific user
    */
-
-  sendNotificationToUser(userId: string, count: any) {
+  sendNotificationToUser(userId: string, notification: Notification) {
     if (!this.io) return;
-    this.io.to(`user: ${userId}`).emit(`notification:unread-count`, { count });
+    this.io.to(`user: ${userId}`).emit('notification:new', notification);
   }
 
+  /**
+   * Send unread count to a specific user
+   */
   sendUnreadCountToUser(userId: string, count: number) {
     if (!this.io) return;
     this.io.to(`user: ${userId}`).emit('notification:unread-count', { count });
@@ -150,8 +176,7 @@ export class SocketServer {
   /**
    * Broadcast new comment to post room
    */
-
-  broadcastNewComment(postId: string, comment: any) {
+  broadcastNewComment(postId: string, comment: CommentData) {
     if (!this.io) return;
     this.io.to(`post: ${postId}`).emit('post:new-comment', comment);
   }
@@ -159,8 +184,7 @@ export class SocketServer {
   /**
    * Broadcast new like to post room
    */
-
-  broadcastNewLike(postId: string, like: any) {
+  broadcastNewLike(postId: string, like: LikeData) {
     if (!this.io) return;
     this.io.to(`post: ${postId}`).emit('post:new-like', like);
   }
@@ -171,6 +195,25 @@ export class SocketServer {
   broadcastLikeCount(postId: string, count: number) {
     if (!this.io) return;
     this.io.to(`post:${postId}`).emit('post:like-count', { postId, count });
+  }
+
+  /**
+   * Broadcast notification read event to all clients of a user
+   */
+  broadcastNotificationRead(userId: string, notificationId: string) {
+    if (!this.io) return;
+    this.io.to(`user: ${userId}`).emit('notification:read', { notificationId });
+  }
+
+  /**
+   * Broadcast notification deleted event to all clients of a user
+   */
+  broadcastNotificationDeleted(userId: string, notificationId: string) {
+    if (!this.io) return;
+    this.io
+
+      .to(`user: ${userId}`)
+      .emit('notification:deleted', { notificationId });
   }
 
   getIO(): Server | null {

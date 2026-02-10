@@ -1,13 +1,7 @@
-import {
-  PrismaClient,
-  NotificationType,
-  EntityType,
-  Prisma,
-} from '@prisma/client';
+import { PrismaClient, NotificationType, Prisma } from '@prisma/client';
 import {
   CreateNotificationInput,
   GetNotificationsQueryInput,
-  notificationSchema,
 } from '../schema/notification.schema';
 import { socketServer } from '../socket/socket.server';
 export class NotificationError extends Error {
@@ -43,7 +37,7 @@ export class NotificationService {
 
   // Create Notification
   async createNotification(data: CreateNotificationInput) {
-    const { userId, actorId, type, entityType, entityId, metaData } = data;
+    const { actorId } = data;
     try {
       if (data.userId === data.actorId) return null;
 
@@ -88,10 +82,14 @@ export class NotificationService {
       });
 
       if (notification) {
+        // Emit new notification to user
         socketServer.sendNotificationToUser(data.userId, notification);
+
+        // Emit updated unread count to user
         const unreadCount = await this.getUnreadNotificationCount(data.userId);
         socketServer.sendUnreadCountToUser(data.userId, unreadCount);
       }
+
       return notification;
     } catch (error) {
       if (error instanceof NotificationError) throw error;
@@ -168,23 +166,39 @@ export class NotificationService {
       let notification = await this.prisma.notification.findUnique({
         where: { id: notificationId },
       });
+
       if (!notification)
         throw new NotificationError(
           'Notification not found',
           'NOTIFICATION_NOT_FOUND',
           404,
         );
+
       if (notification.userId !== userId)
         throw new NotificationError('Unauthorized', 'UNAUTHORIZED', 403);
 
       notification = await this.prisma.notification.update({
         where: { id: notificationId },
         data: { isRead: true, readAt: new Date() },
+        include: {
+          actor: {
+            select: {
+              id: true,
+              username: true,
+              profilePicture: true,
+              firstname: true,
+              lastname: true,
+            },
+          },
+        },
       });
 
+      // Broadcast notification read event
+      socketServer.broadcastNotificationRead(userId, notificationId);
+
+      // Update and send unread count
       const unreadCount = await this.getUnreadNotificationCount(userId);
       socketServer.sendUnreadCountToUser(userId, unreadCount);
-      socketServer.sendNotificationToUser(userId, notification);
 
       return notification;
     } catch (error) {
@@ -241,24 +255,37 @@ export class NotificationService {
   }
 
   // Delete a notification
-
   async deleteNotification(notificationId: string, userId: string) {
     try {
       const notification = await this.prisma.notification.findUnique({
         where: { id: notificationId },
       });
+
       if (!notification)
         throw new NotificationError(
           'Notification not found',
           'NOTIFICATION_NOT_FOUND',
           404,
         );
+
       if (notification.userId !== userId)
         throw new NotificationError('Unauthorized', 'UNAUTHORIZED', 403);
 
       await this.prisma.notification.delete({
         where: { id: notificationId },
       });
+
+      // Broadcast notification deleted event
+      socketServer.broadcastNotificationDeleted(userId, notificationId);
+
+      // Update and send unread count
+      const unreadCount = await this.getUnreadNotificationCount(userId);
+      socketServer.sendUnreadCountToUser(userId, unreadCount);
+
+      return {
+        success: true,
+        message: 'Notification deleted successfully',
+      };
     } catch (error) {
       if (error instanceof NotificationError) throw error;
       console.error('Error deleting notification:', error);
