@@ -21,4 +21,33 @@ export class SmsService {
       throw new Error('Failed to send SMS');
     }
   }
+
+  static async sendSms(to: string, body: string): Promise<void> {
+    try {
+      await client.messages.create({
+        body,
+        from: process.env.TWILIO_PHONE_NUMBER,
+        to,
+      });
+    } catch (error) {
+      console.error('Failed to send SMS:', error);
+      throw new Error('Failed to send SMS');
+    }
+  }
+
+  static async sendVerificationSms(
+    phoneNumber: string,
+    code: string,
+  ): Promise<void> {
+    const message = `Your Chatterly verification code is: ${code}`;
+    await this.sendSms(phoneNumber, message);
+  }
+
+  static async sendResetPasswordSms(
+    phoneNumber: string,
+    code: string,
+  ): Promise<void> {
+    const message = `Your Chatterly password reset code is: ${code}`;
+    await this.sendSms(phoneNumber, message);
+  }
 }
