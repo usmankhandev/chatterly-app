@@ -39,7 +39,7 @@ export class SmsService {
     phoneNumber: string,
     code: string,
   ): Promise<void> {
-    const message = `Your Chatterly verification code: ${code}`;
+    const message = `Chatterly verification code: ${code}`;
     await this.sendSms(phoneNumber, message);
   }
 
