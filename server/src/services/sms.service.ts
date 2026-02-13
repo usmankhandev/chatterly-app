@@ -17,7 +17,7 @@ export class SmsService {
         to: phoneNumber,
       });
     } catch (error) {
-      console.error('Failed to send SMS:', error);
+      console.error('Failed to send SMS', error);
       throw new Error('Failed to send SMS');
     }
   }
