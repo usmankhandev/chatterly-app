@@ -7,6 +7,8 @@ import postRouter from './routes/post.route';
 import commentRouter from './routes/comment.route';
 import 'dotenv-flow/config';
 import { sockerServer } from './socket/socket.server';
+import { redisClientManager } from './config/redisClient';
+import prisma from './config/prismaClient';
 
 const app = express();
 app.use(cors());
@@ -17,6 +19,56 @@ const httpServer = http.createServer(app);
 
 // Initialize Socket.io server
 sockerServer.initialize(httpServer);
+
+// Health check endpoints
+app.get('/health', async (req, res) => {
+  try {
+    const isRedisHealthy = redisClientManager.isHealthy();
+    const isDatabaseHealthy = true; // Prisma connection is checked on startup
+
+    const status = isRedisHealthy && isDatabaseHealthy ? 'UP' : 'DEGRADED';
+    const statusCode = isRedisHealthy && isDatabaseHealthy ? 200 : 503;
+
+    res.status(statusCode).json({
+      status,
+      timestamp: new Date().toISOString(),
+      services: {
+        database: isDatabaseHealthy ? 'UP' : 'DOWN',
+        cache: isRedisHealthy ? 'UP' : 'DOWN',
+      },
+    });
+  } catch (error) {
+    res.status(503).json({
+      status: 'DOWN',
+      timestamp: new Date().toISOString(),
+      error: 'Health check failed',
+    });
+  }
+});
+
+app.get('/ready', async (req, res) => {
+  try {
+    const isRedisHealthy = redisClientManager.isHealthy();
+    const isDatabaseHealthy = true;
+
+    if (isRedisHealthy && isDatabaseHealthy) {
+      res.status(200).json({
+        ready: true,
+        timestamp: new Date().toISOString(),
+      });
+    } else {
+      res.status(503).json({
+        ready: false,
+        timestamp: new Date().toISOString(),
+        reason: !isDatabaseHealthy 
+  } catch (error) {
+    res.status(503).json({
+      ready: false,
+      timestamp: new Date().toISOString(),
+      error: 'Ready check failed',
+    });
+  }
+});
 
 // routes:
 

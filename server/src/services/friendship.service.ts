@@ -11,6 +11,7 @@ import {
 
 import { PrismaClient, FriendshipStatus } from '@prisma/client';
 import { NotificationService } from './notification.service';
+import { UserService } from './user.service';
 
 export class FriendShipError extends Error {
   constructor(
@@ -27,8 +28,11 @@ export class FriendShipError extends Error {
 
 export class FriendshipService {
   private notificationService: NotificationService;
+  private userService: UserService;
+
   constructor(private prisma: PrismaClient) {
     this.notificationService = new NotificationService(prisma);
+    this.userService = new UserService(prisma);
   }
 
   // Additional methods for friendship management can be added here
@@ -115,6 +119,14 @@ export class FriendshipService {
         },
       });
 
+      // Invalidate friends list cache for both users
+      if (status === 'ACCEPTED') {
+        await this.userService.invalidateFriendsCacheForBoth(
+          requesterId,
+          userId,
+        );
+      }
+
       return {
         requesterId: updatedFriendship.requesterId,
         receiverId: updatedFriendship.receiverId,
@@ -192,6 +204,12 @@ export class FriendshipService {
       where: { id: requestId },
       data: { status: 'ACCEPTED' },
     });
+
+    // Invalidate friends list cache for both users
+    await this.userService.invalidateFriendsCacheForBoth(
+      friendRequest.requesterId,
+      userId,
+    );
 
     // ✅ TRIGGER NOTIFICATION
     await this.notificationService.notifyFriendRequestAcceptance(
