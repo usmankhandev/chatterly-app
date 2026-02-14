@@ -88,6 +88,8 @@ model User {
   receivedRequests   FriendShip[]    @relation("FriendshipReceiver")
   visibility         Visibility      @default(PUBLIC)
   socialAccounts     SocialAccount[]
+  chatParticipations ChatParticipant[]
+  sentMessages       Message[]
 
   // Dates
   createdAt DateTime  @default(now())
@@ -271,8 +273,8 @@ model Chat {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  participiants ChatParticipant[]
-  messages      Message[]
+  participants ChatParticipant[] @relation("ChatParticipants")
+  messages      Message[] @relation("ChatMessages")
 
   // Indexing
 
