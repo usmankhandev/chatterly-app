@@ -5,7 +5,7 @@ export class PresenceService {
     const user = await prisma.user.findUnique({
       where: { id: userId },
     });
-    const socketIds = user?.currentSocketIds || [];
+    const socketIds = (user?.currentSocketIds as string[]) || [];
     if (!socketIds.includes(socketId)) {
       socketIds.push(socketId);
     }
@@ -27,16 +27,18 @@ export class PresenceService {
   async markOffline(userId: string, socketId: string) {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) return;
-    
-    const socketIds = (user.currentSocketIds || []).filter(id: string) => id !== socketId;
-    
+
+    const socketIds = ((user.currentSocketIds as string[]) || []).filter(
+      (id: string) => id !== socketId,
+    );
+
     await prisma.user.update({
       where: { id: userId },
       data: {
         currentSocketIds: socketIds,
         isOnline: socketIds.length > 0, // if still online on another device
-        lastSeen: new Date()
-      }
+        lastSeen: new Date(),
+      },
     });
   }
 
@@ -45,10 +47,9 @@ export class PresenceService {
   async getOnlineStatus(userId: string) {
     return await prisma.user.findUnique({
       where: { id: userId },
-      select: { isOnline: true, lastSeen: true }
+      select: { isOnline: true, lastSeen: true },
     });
   }
 }
-
 
 export const presenceService = new PresenceService();
