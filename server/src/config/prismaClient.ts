@@ -1,7 +1,6 @@
 // src/config/prismaClient.ts
 import { PrismaClient } from '@prisma/client';
 import { loadEnv } from '../utils/env-loader';
-import en from 'zod/v4/locales/en.cjs';
 
 const envResult = loadEnv();
 
