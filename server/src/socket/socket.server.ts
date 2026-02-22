@@ -33,27 +33,6 @@ export class SocketServer {
       pingTimeout: 6000,
       pingInterval: 25000,
     });
-
-    // Authentication middleware
-
-    this.io.use((socket, next) => {
-      try {
-        const token = socket.handshake.auth.token;
-
-        if (!token) return next(new Error(`Authentication required`));
-
-        // Verify JWT token
-
-        const decoded = TokenUtils.verifyAccessToken(token);
-        socket.data.userId = decoded.userId;
-        socket.data.email = decoded.email;
-
-        next();
-      } catch {
-        next(new Error('Invalid token'));
-      }
-    });
-
     // Connection handler;
 
     this.io.on('connection', async (socket: Socket) => {
