@@ -9,16 +9,6 @@ interface ConnectedUser {
   userId: string;
 }
 
-interface CommentData {
-  id: string;
-  [key: string]: unknown;
-}
-
-interface LikeData {
-  id: string;
-  [key: string]: unknown;
-}
-
 export class SocketServer {
   private io: Server | null = null;
   private connectedUsers: Map<string, ConnectedUser[]> = new Map();
@@ -130,69 +120,6 @@ export class SocketServer {
 
   getUserSocketCount(userId: string): number {
     return this.connectedUsers.get(userId)?.length || 0;
-  }
-
-  // ============================================
-  // NOTIFICATION EMISSION METHODS
-  // ============================================
-
-  /**
-   * Send notification to a specific user
-   */
-  sendNotificationToUser(userId: string, notification: Notification) {
-    if (!this.io) return;
-    this.io.to(`user: ${userId}`).emit('notification:new', notification);
-  }
-
-  /**
-   * Send unread count to a specific user
-   */
-  sendUnreadCountToUser(userId: string, count: number) {
-    if (!this.io) return;
-    this.io.to(`user: ${userId}`).emit('notification:unread-count', { count });
-  }
-
-  /**
-   * Broadcast new comment to post room
-   */
-  broadcastNewComment(postId: string, comment: CommentData) {
-    if (!this.io) return;
-    this.io.to(`post: ${postId}`).emit('post:new-comment', comment);
-  }
-
-  /**
-   * Broadcast new like to post room
-   */
-  broadcastNewLike(postId: string, like: LikeData) {
-    if (!this.io) return;
-    this.io.to(`post: ${postId}`).emit('post:new-like', like);
-  }
-
-  /**
-   * Broadcast like count update
-   */
-  broadcastLikeCount(postId: string, count: number) {
-    if (!this.io) return;
-    this.io.to(`post:${postId}`).emit('post:like-count', { postId, count });
-  }
-
-  /**
-   * Broadcast notification read event to all clients of a user
-   */
-  broadcastNotificationRead(userId: string, notificationId: string) {
-    if (!this.io) return;
-    this.io.to(`user: ${userId}`).emit('notification:read', { notificationId });
-  }
-
-  /**
-   * Broadcast notification deleted event to all clients of a user
-   */
-  broadcastNotificationDeleted(userId: string, notificationId: string) {
-    if (!this.io) return;
-    this.io
-
-      .to(`user: ${userId}`)
-      .emit('notification:deleted', { notificationId });
   }
 
   getIO(): Server | null {
