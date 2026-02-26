@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { sockerServer } from '../socket/socket.server';
+import { socketServer } from '../socket/socket.server';
 import prisma from '../config/prismaClient';
 
 import {
@@ -24,7 +24,7 @@ export class NotificationController {
         });
 
       // Emit real-time notification via Socket.io
-      sockerServer.sendNotificationToUser(
+      socketServer.sendNotificationToUser(
         recipientId,
         await notificationService.getUnreadCount(recipientId),
       );
