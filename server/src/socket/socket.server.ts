@@ -1,6 +1,9 @@
 import { Server as HttpServer } from 'http';
 import { Server, Socket } from 'socket.io';
 import { presenceService } from '../services/presence.service';
+import { notificationEmitter } from './modules/notifications/emitters';
+
+// NOTE: notificationEmitter methods require an active io instance
 
 interface ConnectedUser {
   socketId: string;
@@ -92,6 +95,37 @@ export class SocketServer {
   getIO(): Server | null {
     return this.io;
   }
+
+  // ------------ notification helpers ----------------
+  /**
+   * Send a new notification object to a specific user socket room
+   */
+  // sendNotificationToUser(userId: string, notification: unknown) {
+  //   if (!this.io) return;
+  //   notificationEmitter.sendNotificationToUser(userId, notification, this.io);
+  // }
+
+  /**
+   * Broadcast updated unread count to a user
+   */
+  // sendUnreadCountToUser(userId: string, count: number) {
+  //   if (!this.io) return;
+  //   notificationEmitter.sendUnreadCountToUser(userId, count, this.io);
+  // }
+
+  // /**
+
+  /**
+   * Broadcast notification-deleted event across all connections for a user
+   */
+  //   broadcastNotificationDeleted(userId: string, notificationId: string) {
+  //     if (!this.io) return;
+  //     notificationEmitter.broadcastNotificationDeleted(
+  //       userId,
+  //       notificationId,
+  //       this.io,
+  //     );
+  //   }
 }
 
 export const socketServer = new SocketServer();

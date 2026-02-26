@@ -6,7 +6,7 @@ import authRouter from './routes/auth.route';
 import postRouter from './routes/post.route';
 import commentRouter from './routes/comment.route';
 import 'dotenv-flow/config';
-import { sockerServer } from './socket/socket.server';
+import { socketServer } from './socket/socket.server';
 import { redisClientManager } from './config/redisClient';
 import prisma from './config/prismaClient';
 
@@ -18,7 +18,7 @@ app.use(cookieParser());
 const httpServer = http.createServer(app);
 
 // Initialize Socket.io server
-sockerServer.initialize(httpServer);
+socketServer.initialize(httpServer);
 
 // Health check endpoints
 app.get('/health', async (req, res) => {
@@ -60,7 +60,9 @@ app.get('/ready', async (req, res) => {
       res.status(503).json({
         ready: false,
         timestamp: new Date().toISOString(),
-        reason: !isDatabaseHealthy 
+        reason: !isDatabaseHealthy ? 'Database unhealthy' : 'Cache unhealthy',
+      });
+    }
   } catch (error) {
     res.status(503).json({
       ready: false,
