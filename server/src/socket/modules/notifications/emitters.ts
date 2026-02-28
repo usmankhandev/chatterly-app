@@ -1,4 +1,5 @@
-import { Socket } from 'socket.io';
+import { Socket, Server } from 'socket.io';
+import { Notification } from '@prisma/client';
 import { NotificationEvents } from './events';
 
 interface CommentData {
@@ -22,7 +23,7 @@ export const notificationEmitter = {
   sendNotificationToUser: (
     userId: string,
     notification: Notification,
-    io: Socket,
+    io: Server | Socket,
   ) => {
     if (!io) return;
     io.to(`user: ${userId}`).emit(NotificationEvents.NEW, notification);
@@ -31,7 +32,11 @@ export const notificationEmitter = {
   /**
    * Send unread count to a specific user
    */
-  sendUnreadCountToUser: (userId: string, count: number, io: Socket) => {
+  sendUnreadCountToUser: (
+    userId: string,
+    count: number,
+    io: Server | Socket,
+  ) => {
     if (!io) return;
     io.to(`user: ${userId}`).emit(NotificationEvents.GET_UNREAD_COUNT, {
       count,
@@ -41,7 +46,11 @@ export const notificationEmitter = {
   /**
    * Broadcast new comment to post room
    */
-  broadcastNewComment: (postId: string, comment: CommentData, io: Socket) => {
+  broadcastNewComment: (
+    postId: string,
+    comment: CommentData,
+    io: Server | Socket,
+  ) => {
     if (!io) return;
     io.to(`post: ${postId}`).emit(NotificationEvents.NEW_COMMENT, comment);
   },
@@ -49,7 +58,7 @@ export const notificationEmitter = {
   /**
    * Broadcast new like to post room
    */
-  broadcastNewLike: (postId: string, like: LikeData, io: Socket) => {
+  broadcastNewLike: (postId: string, like: LikeData, io: Server | Socket) => {
     if (!io) return;
     io.to(`post: ${postId}`).emit(NotificationEvents.NEW_LIKE, like);
   },
@@ -57,7 +66,7 @@ export const notificationEmitter = {
   /**
    * Broadcast like count update
    */
-  broadcastLikeCount: (postId: string, count: number, io: Socket) => {
+  broadcastLikeCount: (postId: string, count: number, io: Server | Socket) => {
     if (!io) return;
     io.to(`post:${postId}`).emit('post:like-count', { postId, count });
   },
@@ -68,7 +77,7 @@ export const notificationEmitter = {
   broadcastNotificationRead: (
     userId: string,
     notificationId: string,
-    io: Socket,
+    io: Server | Socket,
   ) => {
     if (!io) return;
     io.to(`user: ${userId}`).emit(NotificationEvents.READ, { notificationId });
@@ -80,7 +89,7 @@ export const notificationEmitter = {
   broadcastNotificationDeleted: (
     userId: string,
     notificationId: string,
-    io: Socket,
+    io: Server | Socket,
   ) => {
     if (!io) return;
     io.to(`user: ${userId}`).emit(NotificationEvents.DELETE, {

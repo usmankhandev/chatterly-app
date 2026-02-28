@@ -100,32 +100,42 @@ export class SocketServer {
   /**
    * Send a new notification object to a specific user socket room
    */
-  // sendNotificationToUser(userId: string, notification: unknown) {
-  //   if (!this.io) return;
-  //   notificationEmitter.sendNotificationToUser(userId, notification, this.io);
-  // }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  sendNotificationToUser(userId: string, notification: any) {
+    if (!this.io) return;
+    notificationEmitter.sendNotificationToUser(userId, notification, this.io);
+  }
 
   /**
    * Broadcast updated unread count to a user
    */
-  // sendUnreadCountToUser(userId: string, count: number) {
-  //   if (!this.io) return;
-  //   notificationEmitter.sendUnreadCountToUser(userId, count, this.io);
-  // }
+  sendUnreadCountToUser(userId: string, count: number) {
+    if (!this.io) return;
+    notificationEmitter.sendUnreadCountToUser(userId, count, this.io);
+  }
 
   // /**
 
   /**
    * Broadcast notification-deleted event across all connections for a user
    */
-  //   broadcastNotificationDeleted(userId: string, notificationId: string) {
-  //     if (!this.io) return;
-  //     notificationEmitter.broadcastNotificationDeleted(
-  //       userId,
-  //       notificationId,
-  //       this.io,
-  //     );
-  //   }
+  broadcastNotificationDeleted(userId: string, notificationId: string) {
+    if (!this.io) return;
+    notificationEmitter.broadcastNotificationDeleted(
+      userId,
+      notificationId,
+      this.io,
+    );
+  }
+
+  broadcastNotificationRead(userId: string, notificationId: string) {
+    if (!this.io) return;
+    notificationEmitter.broadcastNotificationRead(
+      userId,
+      notificationId,
+      this.io,
+    );
+  }
 }
 
 export const socketServer = new SocketServer();
