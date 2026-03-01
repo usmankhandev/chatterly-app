@@ -47,7 +47,7 @@ export class SmsService {
     phoneNumber: string,
     code: string,
   ): Promise<void> {
-    const message = `Chatterly password reset code is: ${code}`;
+    const message = `Your Chatterly password reset code is: ${code}`;
     await this.sendSms(phoneNumber, message);
   }
 }
