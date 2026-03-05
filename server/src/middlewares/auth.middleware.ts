@@ -35,7 +35,7 @@ export class AuthMiddleware {
       if (!token) {
         res.status(401).json({
           success: false,
-          message: 'Access token required',
+          message: 'Access token is required',
           code: 'NO_TOKEN',
         });
         return;
