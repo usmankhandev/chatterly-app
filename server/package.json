@@ -8,6 +8,7 @@
     "test": "npm run db:ensure:test && NODE_ENV=test jest",
     "test:unit": "npm run db:ensure:test && NODE_ENV=test jest --runInBand --detectOpenHandles tests/unit",
     "test:integration": "npm run db:ensure:test && NODE_ENV=test jest --runInBand --detectOpenHandles tests/integration",
+    "test:socket": "tsx src/socket/verifySocketConnection.ts",
     "start": "NODE_ENV=production tsx src/index.ts",
     "test:watch": "NODE_ENV=test jest --watch && npm run db:ensure:test",
     "migrate:dev": "dotenv -e .env.development -- prisma migrate dev --schema=./prisma/schema.prisma",
@@ -75,7 +76,7 @@
     "supertest": "^7.1.1",
     "ts-jest": "^29.4.0",
     "ts-node": "^10.9.2",
-    "tsx": "^4.20.3",
+    "tsx": "^4.21.0",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.36.0"
   }

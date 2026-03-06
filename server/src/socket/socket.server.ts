@@ -2,6 +2,7 @@ import { Server as HttpServer } from 'http';
 import { Server, Socket } from 'socket.io';
 import { presenceService } from '../services/presence.service';
 import { notificationEmitter } from './modules/notifications/emitters';
+import { socketAuth } from './middlewares/socketAuth';
 
 // NOTE: notificationEmitter methods require an active io instance
 
@@ -17,18 +18,22 @@ export class SocketServer {
   initialize(httpServer: HttpServer) {
     this.io = new Server(httpServer, {
       cors: {
-        origin: process.env.FRONTEND_URL || 'http://localhost:3001',
+        // origin: process.env.FRONTEND_URL || 'http://localhost:3001',
+        origin: '*',
         methods: ['GET', 'POST'],
         credentials: true,
       },
       pingTimeout: 6000,
       pingInterval: 25000,
     });
+
+    // Apply authentication middleware
+    this.io.use(socketAuth);
+
     // Connection handler;
 
     this.io.on('connection', async (socket: Socket) => {
       const userId = socket.data.userId;
-
       await presenceService.markOnlineUser(userId, socket.id);
 
       // Emit to Friends

@@ -1,8 +1,11 @@
 import { TokenUtils } from '../../utils/shared/auth.utils';
-import { Socket } from 'socket.io';
+import { ExtendedError, Socket } from 'socket.io';
 import { NextFunction } from 'express';
 
-export function socketAuth(socket: Socket, next: NextFunction) {
+export function socketAuth(
+  socket: Socket,
+  next: (err?: ExtendedError) => void,
+) {
   try {
     // Verify JWT token
     const token = socket.handshake.auth.token;

@@ -13,7 +13,7 @@ router.post(
 );
 
 router.get(
-  '/post/:postId',
+  '/:postId/comments',
   AuthMiddleware.authenticateUser,
   CommentController.getComments,
 );

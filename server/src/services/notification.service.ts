@@ -2,6 +2,7 @@ import { PrismaClient, NotificationType, Prisma } from '@prisma/client';
 import {
   CreateNotificationInput,
   GetNotificationsQueryInput,
+  NotificationTypeEnum,
 } from '../schema/notification.schema';
 import { socketServer } from '../socket/socket.server';
 export class NotificationError extends Error {
@@ -37,15 +38,17 @@ export class NotificationService {
 
   // Create Notification
   async createNotification(data: CreateNotificationInput) {
-    const { actorId } = data;
+    const { actorId, userId, type, entityType, entityId, metaData } = data;
     try {
-      if (data.userId === data.actorId) return null;
+      // if (data.userId === data.actorId) return null;
 
       // Get actor's name for message
       const actor = await this.prisma.user.findUnique({
         where: { id: actorId },
         select: { username: true, firstname: true, lastname: true },
       });
+
+      console.log(`actor: ${actor}`);
 
       if (!actor)
         throw new NotificationError('Actor not found', 'ACTOR_NOT_FOUND', 404);

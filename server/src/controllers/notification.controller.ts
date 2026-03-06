@@ -63,6 +63,8 @@ export class NotificationController {
       const payload = createNotificationSchema.parse(req.body);
       const notification =
         await notificationService.createNotification(payload);
+
+      console.log(`Created notification: ${notification}`);
       res.status(201).json({ success: true, data: { notification } });
       if (!notification) {
         res.status(200).json({
