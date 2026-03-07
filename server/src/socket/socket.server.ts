@@ -53,7 +53,6 @@ export class SocketServer {
       // Handle disconnect.
 
       socket.on('disconnect', async () => {
-        console.log(`🔌 User disconnected: ${userId} (socket: ${socket.id})`);
         await presenceService.markOffline(userId, socket.id);
         const user = await presenceService.getOnlineStatus(userId);
         if (user && !user.isOnline) {
@@ -64,7 +63,6 @@ export class SocketServer {
         this.removeConnectedUser(userId, socket.id);
       });
     });
-    console.log(`Socket.io server initialized`);
     return this.io;
   }
 

@@ -29,9 +29,6 @@ export function registerNotificationHandlers(socket: Socket, io: Server) {
 
   // Marking notification as read via socket
   socket.on('notification:read', (notificationId: string) => {
-    console.log(
-      `User ${socket.data.userId} read notification: ${notificationId}`,
-    );
     // Broadcast to all connections of this user
     notificationEmitter.broadcastNotificationRead(
       socket.data.userId,
@@ -42,9 +39,6 @@ export function registerNotificationHandlers(socket: Socket, io: Server) {
 
   // Handle notification deletion
   socket.on('notification:delete', (notificationId: string) => {
-    console.log(
-      `User ${socket.data.userId} deleted notification: ${notificationId}`,
-    );
     notificationEmitter.broadcastNotificationDeleted(
       socket.data.userId,
       notificationId,
