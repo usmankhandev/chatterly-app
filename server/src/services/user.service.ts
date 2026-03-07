@@ -34,7 +34,7 @@ export class UserService {
       cacheKey,
       async () => {
         logger.debug(
-          `Fetching user profile with settings from database: ${userId}`,
+          `Fetching user profile with settings from database is: ${userId}`,
         );
         const user = await this.fetchUserProfile(userId);
         return user || null;
