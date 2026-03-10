@@ -35,6 +35,9 @@ async function testSocketConnection() {
   socket.on('connect_error', (error) => {
     process.exit(1);
   });
+  socket.onAny((event, data) => {
+    console.log('EVENT:', event, data);
+  });
 }
 
 testSocketConnection();

@@ -26,7 +26,9 @@ export const notificationEmitter = {
     io: Server | Socket,
   ) => {
     if (!io) return;
-    io.to(`user: ${userId}`).emit(NotificationEvents.NEW, notification);
+
+    console.log('🚀 Emitting notification to room:', `user:${userId}`);
+    io.to(`user:${userId}`).emit(NotificationEvents.NEW, notification);
   },
 
   /**
@@ -38,7 +40,7 @@ export const notificationEmitter = {
     io: Server | Socket,
   ) => {
     if (!io) return;
-    io.to(`user: ${userId}`).emit(NotificationEvents.GET_UNREAD_COUNT, {
+    io.to(`user:${userId}`).emit(NotificationEvents.GET_UNREAD_COUNT, {
       count,
     });
   },
@@ -52,7 +54,7 @@ export const notificationEmitter = {
     io: Server | Socket,
   ) => {
     if (!io) return;
-    io.to(`post: ${postId}`).emit(NotificationEvents.NEW_COMMENT, comment);
+    io.to(`post:${postId}`).emit(NotificationEvents.NEW_COMMENT, comment);
   },
 
   /**
@@ -60,7 +62,7 @@ export const notificationEmitter = {
    */
   broadcastNewLike: (postId: string, like: LikeData, io: Server | Socket) => {
     if (!io) return;
-    io.to(`post: ${postId}`).emit(NotificationEvents.NEW_LIKE, like);
+    io.to(`post:${postId}`).emit(NotificationEvents.NEW_LIKE, like);
   },
 
   /**
@@ -80,7 +82,7 @@ export const notificationEmitter = {
     io: Server | Socket,
   ) => {
     if (!io) return;
-    io.to(`user: ${userId}`).emit(NotificationEvents.READ, { notificationId });
+    io.to(`user:${userId}`).emit(NotificationEvents.READ, { notificationId });
   },
 
   /**
@@ -92,7 +94,7 @@ export const notificationEmitter = {
     io: Server | Socket,
   ) => {
     if (!io) return;
-    io.to(`user: ${userId}`).emit(NotificationEvents.DELETE, {
+    io.to(`user:${userId}`).emit(NotificationEvents.DELETE, {
       notificationId,
     });
   },

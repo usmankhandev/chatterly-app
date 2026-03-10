@@ -38,7 +38,7 @@ export class NotificationService {
 
   // Create Notification
   async createNotification(data: CreateNotificationInput) {
-    const { actorId, userId, type, entityType, entityId, metaData } = data;
+    const { actorId } = data;
     try {
       // if (data.userId === data.actorId) return null;
 

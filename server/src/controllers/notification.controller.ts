@@ -65,33 +65,30 @@ export class NotificationController {
         await notificationService.createNotification(payload);
 
       console.log(`Created notification: ${notification}`);
-      res.status(201).json({ success: true, data: { notification } });
+      console.log('Created notification:', notification);
       if (!notification) {
-        res.status(200).json({
+        return res.status(200).json({
           success: true,
           message: 'self-notification ignored',
           data: null,
         });
-        return;
       }
-      res.status(201).json({
+      return res.status(201).json({
         success: true,
         message: 'Notification created successfully',
         data: { notification },
       });
     } catch (error) {
       if (error instanceof ZodError) {
-        res.status(400).json({ success: false, errors: error.issues });
-        return;
+        return res.status(400).json({ success: false, errors: error.issues });
       }
       if (error instanceof NotificationError) {
-        res
+        return res
           .status(error.statusCode)
           .json({ success: false, message: error.message });
-        return;
       }
       console.error('NotificationController.create error:', error);
-      res
+      return res
         .status(500)
         .json({ success: false, message: 'Internal Server Error' });
     }

@@ -12,7 +12,7 @@ interface ConnectedUser {
 }
 
 export class SocketServer {
-  private io: Server | null = null;
+  private io: Server;
   private connectedUsers: Map<string, ConnectedUser[]> = new Map();
 
   initialize(httpServer: HttpServer) {
@@ -48,7 +48,7 @@ export class SocketServer {
 
       // Join user's personal room for notification
 
-      socket.join(`user: ${userId}`);
+      socket.join(`user:${userId}`);
 
       // Handle disconnect.
 
