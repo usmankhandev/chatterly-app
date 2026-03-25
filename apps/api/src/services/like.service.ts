@@ -45,7 +45,7 @@ export class LikeService {
           },
         });
         if (!comment) {
-          throw new LikeError('Comment not found', 'COMMENT_NOT_FOUND', 404);
+          throw new LikeError('Comment is not found', 'COMMENT_NOT_FOUND', 404);
         }
       }
       // Prevent duplicate likes
