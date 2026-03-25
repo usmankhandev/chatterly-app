@@ -1,0 +1,427 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String  @id @default(cuid())
+  firstname      String?
+  lastname       String?
+  email          String  @unique
+  username       String  @unique
+  bio            String?
+  profilePicture String?
+  coverPhoto     String?
+
+  // user auth 
+
+  // 1. Password Security
+  passwordHash         String
+  passwordSalt         String?
+  passwordHistory      Json?
+  lastPasswordChange   DateTime?
+  passwordResetToken   String?
+  passwordResetExpires DateTime?
+
+  // 2. Email verification and communication
+
+  isEmailVerified          Boolean   @default(false)
+  emailVerificationToken   String?
+  emailVerificationExpires DateTime?
+  pendingEmail             String? // for later email change verification
+
+  // 3. Account security and status
+
+  accountStatus     UserStatus @default(ACTIVE)
+  loginAttempts     Int        @default(0)
+  lockedUntil       DateTime?
+  lastLoginAt       DateTime?
+  lastKnownIp       String?
+  lastKnownLocation String?
+
+  // User Presense
+
+  isOnline        Boolean   @default(false)
+  lastSeen        DateTime?
+  currentSocketIds Json?
+  activeCallId    String?
+  presenceMeta    Json?
+
+  // 4. JWT & Session Management
+
+  refreshTokenHash    String?
+  refreshTokenExpires DateTime?
+  jwtVersion          Int       @default(0) // for token invalidation
+  sessionMetadata     Json?
+
+  // 5. Multi-Factor Authentication
+
+  mfaEnabled          Boolean   @default(false)
+  mfaSecret           String?
+  backupCodes         Json?
+  smsPhone            String?
+  trustedDevices      Json?
+  mfaMethods          MfaType[]
+  emailMfaCode        String?
+  emailMfaCodeExpires DateTime?
+  smsMfaCode          String?
+  smsMfaCodeExpires   DateTime?
+  // 6. Security and Audit Trail
+
+  securityEvents      Json?
+  failedLoginAttempts Json?
+  twoFactorBackupUsed DateTime?
+
+  // Relations
+
+  posts              Post[]
+  comments           Comment[]
+  likes              Like[]
+  notifications      Notification[]
+  actorNotification  Notification[]  @relation("NotificationActor")
+  sentFriendRequests FriendShip[]    @relation("FriendshipRequester")
+  receivedRequests   FriendShip[]    @relation("FriendshipReceiver")
+  visibility         Visibility      @default(PUBLIC)
+  socialAccounts     SocialAccount[]
+  chatParticipations ChatParticipant[]
+  sentMessages       Message[]
+
+  // Dates
+  createdAt DateTime  @default(now())
+  deletedAt DateTime?
+  updatedAt DateTime? @updatedAt
+
+  // indexing
+
+  @@index([firstname, lastname])
+  @@index([username, email])
+  @@index([username])
+  @@index([email])
+  @@index([passwordResetToken])
+  @@index([emailVerificationToken])
+  @@index([accountStatus, createdAt])
+  @@index([lastLoginAt])
+  @@index([mfaEnabled, accountStatus])
+  @@index([isOnline, lastSeen])
+  @@index([createdAt])
+}
+
+model Post {
+  id         String     @id @default(cuid())
+  title      String?
+  content    String
+  imageUrl   String?
+  authorId   String
+  visibility Visibility @default(PUBLIC)
+
+  // Dates
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime? @updatedAt
+  deletedAt DateTime?
+
+  //relations  
+  author        User           @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  comments      Comment[]
+  notifications Notification[]
+  likes         Like[]
+
+  // indexing
+  @@index([authorId]) // Performance optimization
+  @@index([createdAt, authorId])
+  @@index([title, createdAt])
+  @@index([visibility, createdAt])
+  @@index([createdAt])
+}
+
+model Comment {
+  id              String     @id @default(cuid())
+  content         String
+  imageUrl        String?
+  authorId        String
+  postId          String
+  parentCommentId String?
+  visibility      Visibility @default(PUBLIC)
+
+  // Dates
+  createdAt DateTime  @default(now())
+  updatedAt DateTime? @updatedAt
+  deletedAt DateTime?
+
+  // relations
+  author        User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  post          Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  parentComment Comment?  @relation("CommentReplies", fields: [parentCommentId], references: [id], onDelete: Cascade)
+  replies       Comment[] @relation("CommentReplies")
+
+  likes         Like[]
+  notifications Notification[]
+
+  // indexing
+
+  @@index([postId, id])
+  @@index([authorId, id])
+  @@index([createdAt, id])
+  @@index([parentCommentId])
+}
+
+model Like {
+  id        String  @id @default(cuid())
+  authorId  String
+  postId    String?
+  commentId String?
+  // visibility Visibility @default(PUBLIC)
+
+  // Relations
+
+  author   User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  post     Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  comment  Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  likeType LikeType @default(LIKE)
+
+  // Dates
+
+  createdAt DateTime  @default(now())
+  deletedAt DateTime?
+
+  // Indexing
+
+  @@unique([authorId, postId], name: "unique_post_like")
+  @@unique([authorId, commentId], name: "unique_comment_like")
+  @@index([postId])
+  @@index([commentId])
+  @@index([authorId])
+}
+
+model Notification {
+  id           String           @id @default(cuid())
+  type         NotificationType
+  content      String
+  userId       String
+  actorId      String?
+  postId       String?
+  commentId    String?
+  friendshipId String?
+  isRead       Boolean          @default(false)
+  readAt      DateTime?
+  metaData     Json?
+
+  // Relations
+
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  actor      User?       @relation("NotificationActor", fields: [actorId], references: [id], onDelete: Cascade)
+  post       Post?       @relation(fields: [postId], references: [id], onDelete: Cascade)
+  comment    Comment?    @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  friendship FriendShip? @relation(fields: [friendshipId], references: [id], onDelete: Cascade)
+
+  // Dates
+
+  createdAt DateTime  @default(now())
+  deletedAt DateTime?
+
+  // Notification Details
+
+  entityType EntityType?
+  entityId   String?
+  message String?
+
+  // Indexing
+
+  @@index([userId, isRead])
+  @@index([userId, createdAt])
+}
+
+// Friendship System:
+
+model FriendShip {
+  id          String           @id @default(cuid())
+  requesterId String
+  receiverId  String
+  status      FriendshipStatus @default(PENDING)
+
+  // relations
+
+  requester     User           @relation("FriendshipRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  receiver      User           @relation("FriendshipReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  notifications Notification[]
+
+  // Dates
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([requesterId, receiverId])
+  @@index([requesterId, status])
+  @@index([receiverId, status])
+}
+
+// Chat Integration
+
+model Chat {
+  id       String   @id @default(cuid())
+  name      String
+  isGroup   Boolean  @default(false)
+  memberIds String[] // array of user IDs
+
+  // Dates
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  participants ChatParticipant[] @relation("ChatParticipants")
+  messages      Message[] @relation("ChatMessages")
+
+  // Indexing
+
+  @@index([isGroup])
+  @@index([createdAt])
+}
+
+model ChatParticipant {
+  id     String @id @default(cuid())
+  chatId String
+  userId String
+
+  // relations
+
+  chat Chat @relation("ChatParticipants", fields: [chatId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Dates
+
+  joinedAt DateTime @default(now())
+
+  // Indexing
+
+  @@unique([chatId, userId])
+  @@index([userId])
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  chatId    String
+  senderId  String
+  content   String
+  isRead   Boolean  @default(false)
+  readAt   DateTime?
+  metadata  Json?
+  isDelivered Boolean  @default(false)
+  deliveredAt DateTime?
+  readByIds String[] // array of user IDs who have read the message
+
+  // Dates
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // relations
+
+  chat   Chat @relation("ChatMessages", fields: [chatId], references: [id], onDelete: Cascade)
+  sender User @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  // Indexing
+
+  @@index([chatId, createdAt])
+  @@index([senderId, createdAt])
+}
+
+model SocialAccount {
+  id                String         @id @default(cuid())
+  userId            String
+  provider          SocialProvider
+  providerAccountId String
+  providerEmail     String?
+  accessToken       String?
+  refreshToken      String?
+  tokenExpires      DateTime?
+  scope             String?
+  providerData      Json?
+
+  // Dates
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // relations:
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // constraints
+
+  @@unique([provider, providerAccountId])
+  @@unique([userId, provider])
+  @@index([userId])
+  @@index([provider])
+}
+
+// Enums
+
+enum Visibility {
+  PUBLIC
+  FRIENDSONLY
+  PRIVATE
+}
+
+enum FriendshipStatus {
+  ACCEPTED
+  DECLINED
+  PENDING
+}
+
+enum LikeType {
+  LIKE
+  LOVE
+  LAUGH
+  WOW
+  SAD
+  ANGRY
+  DISLIKE
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DEACTIVATED
+  PENDING_VERIFICATION
+  LOCKED
+}
+
+enum NotificationType {
+  POST_LIKE
+  COMMENT_LIKE
+  POST_COMMENT
+  FRIEND_REQUEST
+  FRIEND_ACCEPT
+  REPLY_COMMENT
+  MENTION
+}
+
+enum EntityType {
+  POST
+  COMMENT
+  USER
+}
+
+enum SocialProvider {
+  GOOGLE
+  GITHUB
+  FACEBOOK
+  TWITTER
+  LINKEDIN
+  APPLE
+  MICROSOFT
+}
+
+enum MfaType {
+  TOTP
+  SMS
+  EMAIL
+  BACK_CODES
+  HARDWARE_KEY
+  PUSH
+}
