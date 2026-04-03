@@ -9,9 +9,9 @@ logs/
 npm-debug.log*
 
 # Env
-.env
-.env.*
-!.env.example
+apps/api/.env*
+apps/api/.env.test
+apps/api/.env.development
 
 # Prisma
 apps/api/prisma/migrations/*/README.md
@@ -37,8 +37,9 @@ Thumbs.db
 docker-data/
 
 # Nx
+./nx*
 .nx/cache
-.nx/workspace-data
+.nx/workspace-data/*
 
 # Angular
 apps/*/dist/

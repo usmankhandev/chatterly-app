@@ -16,7 +16,7 @@ async function testSocketConnection() {
 
   try {
     const decoded = TokenUtils.verifyAccessToken(token);
-  } catch (error: Error) {
+  } catch (error: any) {
     process.exit(1);
   }
 

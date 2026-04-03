@@ -1,5 +1,5 @@
 import request from 'supertest';
-import app from '../../app';
+import { app } from '../../app';
 import prisma from '../../config/prismaClient';
 import { Visibility } from '@prisma/client';
 import { PasswordUtils, TokenUtils } from '../../utils/shared/auth.utils';

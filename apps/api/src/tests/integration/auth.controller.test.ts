@@ -2,7 +2,7 @@ process.env.NODE_ENV = 'test';
 process.env.TEST_TYPE = 'integration';
 
 import request from 'supertest';
-import app from '../../app';
+import { app } from '../../app';
 import prisma from '../../config/prismaClient';
 
 // Create mock function inside the factory

@@ -1,0 +1,7 @@
+{
+  "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "@types/redis": "^4.0.10",
+    "@types/winston": "^2.4.4"
+  }
+}

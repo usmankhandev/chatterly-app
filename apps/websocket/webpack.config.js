@@ -2,8 +2,9 @@ const { NxAppWebpackPlugin } = require('@nx/webpack/app-plugin');
 const { join } = require('path');
 
 module.exports = {
+  context: join(__dirname, 'apps/websocket'),
   output: {
-    path: join(__dirname, '../dist/websocket'),
+    path: join(__dirname, 'dist/websocket'),
     clean: true,
     ...(process.env.NODE_ENV !== 'production' && {
       devtoolModuleFilenameTemplate: '[absolute-resource-path]',

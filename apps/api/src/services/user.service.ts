@@ -69,4 +69,12 @@ export class UserService {
       },
     });
   }
+
+  /**
+   * Invalidate friends cache for both users
+   */
+  async invalidateFriendsCacheForBoth(userId1: string, userId2: string) {
+    await cacheService.delete(CACHE_KEYS.FRIENDSHIP_LIST(userId1));
+    await cacheService.delete(CACHE_KEYS.FRIENDSHIP_LIST(userId2));
+  }
 }

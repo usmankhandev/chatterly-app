@@ -1,9 +1,5 @@
 import { redisClientManager } from '../../config/redisClient';
 import {
- 
- 
- ,
-
   cacheService,
   CACHE_KEYS,
   CACHE_TTL,
@@ -177,7 +173,7 @@ describe('Redis Cache Integration', () => {
         60,
       );
       await cacheService.set(`other:key`, { other: 'data' }, 60);
-      
+
       // Delete by pattern
       const deletedCount = await cacheService.deleteByPattern('user:*');
 

@@ -27,7 +27,7 @@ class RedisClientManager {
   private connectionAttempts: number = 0;
   private maxConnectionAttempts: number = 5;
   private connectionRetryDelay: number = 2000; // ms
-  private healthCheckInterval: NodeJS.Timer | null = null;
+  private healthCheckInterval: NodeJS.Timeout | null = null;
 
   async connect(): Promise<void> {
     if (this.isConnected && this.client) {

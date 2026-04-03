@@ -67,28 +67,31 @@ export class NotificationController {
       console.log(`Created notification: ${notification}`);
       console.log('Created notification:', notification);
       if (!notification) {
-        return res.status(200).json({
+        res.status(200).json({
           success: true,
           message: 'self-notification ignored',
           data: null,
         });
+        return;
       }
-      return res.status(201).json({
+      res.status(201).json({
         success: true,
         message: 'Notification created successfully',
         data: { notification },
       });
     } catch (error) {
       if (error instanceof ZodError) {
-        return res.status(400).json({ success: false, errors: error.issues });
+        res.status(400).json({ success: false, errors: error.issues });
+        return;
       }
       if (error instanceof NotificationError) {
-        return res
+        res
           .status(error.statusCode)
           .json({ success: false, message: error.message });
+        return;
       }
       console.error('NotificationController.create error:', error);
-      return res
+      res
         .status(500)
         .json({ success: false, message: 'Internal Server Error' });
     }

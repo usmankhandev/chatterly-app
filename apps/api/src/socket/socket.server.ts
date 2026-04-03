@@ -12,7 +12,7 @@ interface ConnectedUser {
 }
 
 export class SocketServer {
-  private io: Server;
+  private io!: Server;
   private connectedUsers: Map<string, ConnectedUser[]> = new Map();
 
   initialize(httpServer: HttpServer) {

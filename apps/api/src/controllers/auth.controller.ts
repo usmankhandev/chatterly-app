@@ -418,7 +418,7 @@ export class AuthController {
 
   // async hashRefreshToken() {}
 
-  static async hashRefreshToken(req: Request): Promise<void> {
+  static async hashRefreshToken(req: Request): Promise<string> {
     const { refreshToken } = req.body._refreshTokenHash;
     const saltRounds = 10;
     try {
