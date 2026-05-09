@@ -1,0 +1,83 @@
+version: '3.9'
+
+services:
+  # ── Infrastructure ────────────────────────────────────────────────────────
+
+  postgres-db:
+    image: postgres:16-alpine
+    container_name: postgres-db-chatterly
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: 'env_file: ./apps/api/.env.development:POSTGRES_USER'
+      POSTGRES_PASSWORD: 'env_file: ./apps/api/.env.development:POSTGRES_PASSWORD'
+      POSTGRES_DB: 'env_file: ./apps/api/.env.development:POSTGRES_DB'
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U chatterly -d chatterly_dev']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+  redis-db:
+    image: redis:7-alpine
+    container_name: redis-db-chatterly
+    restart: unless-stopped
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # ── Application Services ──────────────────────────────────────────────────
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: runtime
+    container_name: api-chatterly
+    restart: unless-stopped
+    ports:
+      - '3001:3001'
+    environment:
+      NODE_ENV: development
+      PORT: 3001
+      DATABASE_URL: 'env_file: ./apps/api/.env.development:DATABASE_URL'
+      REDIS_URL: 'env_file: ./apps/api/.env.development:REDIS_URL'
+      JWT_SECRET: 'env_file: ./apps/api/.env.development:JWT_SECRET'
+    depends_on:
+      postgres-db: { condition: service_healthy }
+      redis-db: { condition: service_healthy }
+    # Mount source for hot-reload in development (comment out for production-like testing)
+    # volumes:
+    #   - ./apps/api/src:/workspace/apps/api/src
+  # ── Observability (optional, uncomment when Phase 1.3 is done) ───────────
+
+  # prometheus:
+  #   image: prom/prometheus:latest
+  #   container_name: chatterly-prometheus
+  #   ports:
+  #     - "9090:9090"
+  #   volumes:
+  #     - ./docker/prometheus.yml:/etc/prometheus/prometheus.yml
+
+  # grafana:
+  #   image: grafana/grafana:latest
+  #   container_name: chatterly-grafana
+  #   ports:
+  #     - "3333:3000"
+  #   environment:
+  #     GF_SECURITY_ADMIN_PASSWORD: admin
+
+volumes:
+  postgres_data:
+  redis_data:
