@@ -78,7 +78,7 @@ stages:
             displayName: 'Setup SSH Key'
 
           - script: |
-              scp -i ~/.ssh/ec2_key.pem docker-compose.yml $(EC2_USER)@$(EC2_HOST):/home/ubuntu/chatterly/docker-compose.yml
+              scp -i ~/.ssh/ec2_key.pem docker-compose.prod.yml $(EC2_USER)@$(EC2_HOST):/home/ubuntu/chatterly/docker-compose.yml
             displayName: 'Copy Docker Compose File to EC2'
 
           # SSH INTO EC2 INSTANCE and Deploy
