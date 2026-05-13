@@ -74,43 +74,36 @@ stages:
         deploy:
           steps:
           - script: |
-              mkdir -p ~/.ssh
-              echo "$(EC2_SSH_KEY)" > ~/.ssh/ec2_key.pem
-              chmod 600 ~/.ssh/ec2_key.pem
-              # Add EC2 instance to known hosts to avoid SSH prompt
-              ssh-keygen -H $(EC2_HOST) >> ~/.ssh/known_hosts
-            displayName: 'Setup SSH Key'
-
-          - script: |
               echo "Host is: $(EC2_HOST)"
               echo "User is: $(EC2_USER)"
               echo "Key length: ${#EC2_SSH_KEY}"
             displayName: 'Debug variables'
-
-          - script: |
-              scp -i ~/.ssh/ec2_key.pem docker-compose.prod.yml $(EC2_USER)@$(EC2_HOST):/home/ubuntu/chatterly/docker-compose.yml
-            displayName: 'Copy Docker Compose File to EC2'
-
-          # SSH INTO EC2 INSTANCE and Deploy
+          # No Need to SSH since CI Agent is on EC2 already — we can directly run commands on the host machine
           - script: |
               # No SSH needed — agent IS on EC2 already
+
+              echo "=== Copying compose file ==="
               cp $(Build.SourcesDirectory)/docker-compose.prod.yml \
                  /home/ubuntu/chatterly/docker-compose.yml
 
               cd /home/ubuntu/chatterly
 
+              echo "=== Logging into Docker Hub ==="
               echo "$(DOCKERHUB_PSW)" | \
               docker login -u "$(DOCKER_USERNAME)" --password-stdin
 
+              echo "=== Pulling latest images ==="
               docker pull $(API_IMAGE):latest
 
-
+              echo "=== Starting containers ==="
               docker compose --env-file /home/ubuntu/.env.production up -d --remove-orphans
 
+              echo "=== Running migrations ==="
               docker compose --env-file /home/ubuntu/.env.production \
                 exec -T api \
                 npx prisma migrate deploy --schema=./prisma/schema.prisma
 
+              echo "=== Health check ==="
               sleep 10
               curl -f http://localhost:3001/health || exit 1
 
