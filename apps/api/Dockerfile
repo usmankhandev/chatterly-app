@@ -1,18 +1,27 @@
 # Stage - 1: Dependency Istaller:
-  
+
   FROM node:20-alpine AS deps
   WORKDIR /app
 
+  COPY package.json package-lock.json ./
   COPY nx.json tsconfig.base.json ./
+  RUN npm ci --prefer-offline --fetch-timeout=300000
 
-  COPY package*.json nx.json project.json  ./
+  # Copy entire api app folder — preserving the path
+  COPY apps/api ./apps/api
+  COPY libs ./libs
 
-  RUN npm ci
+  RUN  echo "=== /app/apps/api contents ===" && \
+      ls -la /app/apps/api/ && \
+      echo "=== tsconfig files ===" && \
+      find /app/apps/api -name "tsconfig*" && \
+      echo "=== Done ==="
+  
+  COPY apps/api/prisma ./apps/api/prisma
 
-  COPY /apps/api/prisma /app/apps/api/prisma
+  RUN npx prisma generate --schema=./apps/api/prisma/schema.prisma
 
-  RUN npx prisma generate --schema=/app/apps/api/prisma/schema.prisma
-
+  RUN npx nx build api --configuration=production
 
   # Stage - 2: Builder
 
@@ -44,12 +53,13 @@
 
   FROM node:20-alpine AS runtime
   WORKDIR /app
-  COPY --from=builder /app/dist/apps/api/main.js /app/main.js
+  COPY --from=builder /app/dist/apps/api ./
 
   COPY --from=deps /app/node_modules /app/node_modules
 
   COPY --from=deps /app/apps/api/prisma /app/prisma
-
+  
+  COPY .env.development ./
   
   ENV NODE_ENV=production
   ENV PORT=3001
@@ -57,7 +67,7 @@
   EXPOSE 3001
 
 
-  CMD ["sh", "-c", "npx prisma migrate deploy --schema=/app/prisma/schema.prisma && node main.js"]
+  CMD ["sh", "-c", "npx prisma migrate deploy --schema=/app/prisma/schema.prisma && node index.js"]
 
 
 #   Final /app/ contents (the actual deployed image):                   ║

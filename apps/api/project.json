@@ -1,25 +1,69 @@
 {
-    "name": "api",
-    "version": "1.0.0",
-    "description": "API for the project",
-    "$schema": "../../node_modules/nx/schemas/project-schema.json",
-    "sourceRoot": "apps/api/src",
-    "projectType": "application",
-    "targets": {
-        "serve": {
-            "executor": "nx:run-commands",
-            "options": {
-                "command": "npm run dev",
-                "cwd": "apps/api"
-            }
+  "name": "api",
+  "version": "1.0.0",
+  "description": "API for the project",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/api/src",
+  "projectType": "application",
+  "targets": {
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npm run dev",
+        "cwd": "apps/api"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/dist/apps/api"],
+      "options": {
+        "command": "npx tsc --project apps/api/tsconfig.app.json",
+        "cwd": "{workspaceRoot}"
+      },
+      "configurations": {
+        "production": {
+          "command": "npx tsc --project apps/api/tsconfig.app.json",
+          "cwd": "{workspaceRoot}"
         },
-        "build": {
-            "executor": "nx:run-commands",
-            "options": {
-                "command": "npm run build",
-                "cwd": "apps/api"
-            }
+        "development": {
+          "command": "npx tsc --project apps/api/tsconfig.app.json --sourceMap true"
         }
-    }
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npm test",
+        "cwd": "apps/api"
+      }
+    },
 
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npm run lint",
+        "cwd": "apps/api"
+      }
+    },
+    "migrate:dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "dotenv -e apps/api/.env.development -- prisma migrate dev --schema=apps/api/prisma/schema.prisma"
+      }
+    },
+
+    "migrate:test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "dotenv -e apps/api/.env.test -- prisma migrate deploy --schema=apps/api/prisma/schema.prisma"
+      }
+    },
+
+    "migrate:prod": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "dotenv -e apps/api/.env.production -- prisma migrate deploy --schema=apps/api/prisma/schema.prisma"
+      }
+    }
+  }
 }

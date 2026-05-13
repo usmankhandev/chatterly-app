@@ -62,11 +62,22 @@ export class CommentController {
 
   static async getComments(req: Request, res: Response): Promise<void> {
     try {
-      const { postId } = req.params;
       const query = {
         page: Number(req.query.page) || 1,
         limit: Number(req.query.limit) || 10,
       };
+      const rawPostId = Array.isArray(req.query.postId)
+        ? req.query.postId[0]
+        : req.query.postId;
+      const postId = typeof rawPostId === 'string' ? rawPostId : undefined;
+
+      if (!postId) {
+        res.status(400).json({
+          success: false,
+          message: 'postId is required',
+        });
+        return;
+      }
 
       const comments = await commentService.getCommentsByPostId(postId);
       res.status(200).json({
@@ -88,7 +99,9 @@ export class CommentController {
   static async deleteComment(req: Request, res: Response): Promise<void> {
     try {
       const userId = req.user?.id || (req.user as any)?.id;
-      const { commentId } = req.params;
+      const commentId = Array.isArray(req.params.id)
+        ? req.params.id[0]
+        : req.params.id;
       if (!userId)
         res.status(401).json({
           success: false,
