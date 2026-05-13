@@ -1,0 +1,23 @@
+trigger:
+- main
+- development
+
+pr:
+- main
+- development
+
+pool: vmImage:'ubuntu-latest'
+
+steps:
+- task: NodeTool@0
+  inputs:
+    versionSpec: '20.x'
+- script: npm ci
+  displayName: 'Install Dependencies'
+
+- script: npx nx affected --target=build --base=origin/development --head=HEAD
+  displayName: 'Build Affected Apps'
+
+- script: |
+    docker build -t chatterly-api:$(Build.BuildId) -f apps/api/Dockerfile .
+  displayName: 'Docker Build'
