@@ -70,15 +70,15 @@
   CMD ["sh", "-c", "npx prisma migrate deploy --schema=/app/prisma/schema.prisma && node index.js"]
 
 
-#   Final /app/ contents (the actual deployed image):                   ║
-# ║    main.js              ← compiled Express app  (~100KB)             ║
-# ║    node_modules/        ← runtime deps + Prisma client  (~200MB)     ║
-# ║    prisma/                                                           ║
-# ║      schema.prisma      ← needed by prisma migrate deploy            ║
-# ║      migrations/        ← SQL files applied to DB                    ║
-# ║                                                                      ║
-# ║  NOT present (stripped out):                                         ║
-# ║    apps/api/src/        ← TypeScript source (not needed in prod)     ║
-# ║    libs/                ← TypeScript source (not needed in prod)     ║
-# ║    __mocks__/           ← test mocks (never in prod)                 ║
-# ║    prismaTestClient.ts  ← test client (never in prod)  
+#   Final /app/ contents (the actual deployed image):                   EE
+#    main.js              compiled Express app  (~100KB)             
+#    node_modules/        runtime deps + Prisma client  (~200MB)     
+#    prisma/                                                           
+#      schema.prisma      needed by prisma migrate deploy            
+#      migrations/        SQL files applied to DB                    
+#                                                                      
+#  NOT present (stripped out):                                         
+#    apps/api/src/        TypeScript source (not needed in prod)     
+#    libs/                TypeScript source (not needed in prod)     
+#    __mocks__/           test mocks (never in prod)                 
+#     prismaTestClient.ts test client (never in prod)  

@@ -6,8 +6,8 @@ pr:
 - main
 - development
 
-pool: vmImage:'ubuntu-latest'
-
+pool:
+  name: 'chatterly-ec2-agent-8gb'
 stages:
 - stage: Build
   jobs:
