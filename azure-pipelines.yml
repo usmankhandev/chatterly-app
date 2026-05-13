@@ -41,7 +41,7 @@ stages:
       displayName: 'Push API Image to Docker Hub'
       inputs:
         command: 'push'
-        repository: 'osmankhandev/chatterly'
+        repository: 'osmankhandev/chatterly-api'
         tags: |
           $(Build.BuildId)
           latest
