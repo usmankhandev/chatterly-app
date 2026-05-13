@@ -10,9 +10,13 @@ pool:
   name: Default
 
 variables:
-
-  IMAGE_NAME: 'chatterly-api'
-  DOCKER_USERNAME: 'osmankhandev'
+- group: chatterly-secrets-ec2-8gb
+- name: DOCKER_USERNAME
+  value: 'osmankhandev'
+- name: IMAGE_NAME
+  value: 'chatterly-api'
+- name: API_IMAGE
+  value: '$(DOCKER_USERNAME)/$(IMAGE_NAME)'
 
 stages:
 
@@ -78,36 +82,40 @@ stages:
             displayName: 'Setup SSH Key'
 
           - script: |
+              echo "Host is: $(EC2_HOST)"
+              echo "User is: $(EC2_USER)"
+              echo "Key length: ${#EC2_SSH_KEY}"
+            displayName: 'Debug variables'
+
+          - script: |
               scp -i ~/.ssh/ec2_key.pem docker-compose.prod.yml $(EC2_USER)@$(EC2_HOST):/home/ubuntu/chatterly/docker-compose.yml
             displayName: 'Copy Docker Compose File to EC2'
 
           # SSH INTO EC2 INSTANCE and Deploy
           - script: |
-              ssh -i ~/.ssh/ec2_key.pem $(EC2_USER)@(EC2_HOST) << 'EOF'
-                set -e
+              # No SSH needed — agent IS on EC2 already
+              cp $(Build.SourcesDirectory)/docker-compose.prod.yml \
+                 /home/ubuntu/chatterly/docker-compose.yml
 
-                echo "=== Pulling latest image ==="
-                docker pull $(DOCKER_USERNAME)/$(IMAGE_NAME):latest
-                
-                echo "=== Stopping existing containers ==="
-                docker-compose -f /home/ubuntu/chatterly/docker-compose.yml down || true
+              cd /home/ubuntu/chatterly
 
-                echo "=== Deploying with Docker Compose ==="
+              echo "$(DOCKERHUB_PSW)" | \
+              docker login -u "$(DOCKER_USERNAME)" --password-stdin
 
-                cd /home/ubuntu/chatterly
+              docker pull $(API_IMAGE):latest
 
-                docker compose --env-file /home/ubuntu/.env.production up -d ---remove-orphans
 
-                echo "=== Running the DB Migrations ==="
+              docker compose --env-file /home/ubuntu/.env.production up -d --remove-orphans
 
-                docker compose --env-file /home/ubuntu/.env.production exec -T api npx prisma migrate deploy --schema=./prisma/schema.prisma
+              docker compose --env-file /home/ubuntu/.env.production \
+                exec -T api \
+                npx prisma migrate deploy --schema=./prisma/schema.prisma
 
-                echo "=== Verifying health ===" sleep 10 curl -f http://localhost:3001/health || exit 1
+              sleep 10
+              curl -f http://localhost:3001/health || exit 1
 
-                echo "=== Deploy complete ===" 
-
-              EOF
-            displayName: 'SSH and Deploy to EC2'
+              docker logout
+            displayName: 'Deploy on EC2'
 
           - script: rm -f ~/.ssh/ec2_key.pem
             displayName: 'Clean up SSH Key'
