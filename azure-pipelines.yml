@@ -89,23 +89,67 @@ stages:
               cd /home/ubuntu/chatterly
 
               echo "=== Logging into Docker Hub ==="
-              echo "$(DOCKERHUB_PSW)" | \
+              echo "$(DOCKER_PAT)" | \
               docker login -u "$(DOCKER_USERNAME)" --password-stdin
 
               echo "=== Pulling latest images ==="
               docker pull $(API_IMAGE):latest
+              docker pull postgres:16-alpine
+              docker pull redis:7-alpine
+
+              echo "=== Starting infrastructure first ===" 
+              cd /home/ubuntu/chatterly
+              docker compose --env-file /home/ubuntu/.env.production \ up -d postgres-db redis-db
+
+
+              echo "=== Waiting for postgres to be healthy ==="
+              # Wait up to 60 seconds for postgres healthcheck to pass
+              RETRIES=12
+              until docker compose --env-file /home/ubuntu/.env.production \
+                exec -T postgres-db pg_isready -U postgres || [ $RETRIES -eq 0 ]; do
+                echo "Waiting for postgres... ($RETRIES retries left)"
+                RETRIES=$((RETRIES-1))
+                sleep 5
+              done
+
+              if [ $RETRIES -eq 0 ]; then
+                echo "Postgres failed to become ready"
+                docker compose --env-file /home/ubuntu/.env.production logs postgres-db
+                exit 1
+              fi
+
+              echo "Postgres is ready"
+
+
 
               echo "=== Starting containers ==="
               docker compose --env-file /home/ubuntu/.env.production up -d --remove-orphans
+
+
+              echo "=== Waiting for api to start ===" 
+              RETRIES=12 
+              until curl -sf http://localhost:3001/health || [ $RETRIES -eq 0 ]; do 
+                echo "Waiting for api... ($RETRIES retries left)" 
+                RETRIES=$((RETRIES-1)) sleep 5 
+              done
+
+              if [ $RETRIES -eq 0 ]; then 
+                echo "API health check failed — showing logs:" 
+                docker compose --env-file /home/ubuntu/.env.production logs api 
+                exit 1 
+              fi
+
+              echo "API is live at http://$(EC2_HOST):3001/health"
+
 
               echo "=== Running migrations ==="
               docker compose --env-file /home/ubuntu/.env.production \
                 exec -T api \
                 npx prisma migrate deploy --schema=./prisma/schema.prisma
 
-              echo "=== Health check ==="
-              sleep 10
-              curl -f http://localhost:3001/health || exit 1
+              echo "=== Cleanup ===" 
+              docker logout 
+              docker image prune -f
 
               docker logout
             displayName: 'Deploy on EC2'
