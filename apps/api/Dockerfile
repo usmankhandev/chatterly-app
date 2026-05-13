@@ -59,7 +59,7 @@
 
   COPY --from=deps /app/apps/api/prisma /app/prisma
   
-  COPY .env.development ./
+  # COPY .env.development ./
   
   ENV NODE_ENV=production
   ENV PORT=3001
