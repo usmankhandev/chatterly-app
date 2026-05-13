@@ -1,0 +1,53 @@
+version: '3.9'
+
+services:
+  postgres-db:
+    image: postgres:16-alpine
+    container_name: postgres-db-chatterly
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    # No ports exposed — only accessible within Docker network
+    # Postgres should NEVER be exposed on EC2 public IP
+
+  redis-db:
+    image: redis:7-alpine
+    container_name: redis-db-chatterly
+    restart: always
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    # No ports exposed — internal only
+
+  api:
+    image: osmankhandev/chatterly-api:latest
+    container_name: api-chatterly
+    restart: always
+    ports:
+      - '3001:3001'
+    environment:
+      NODE_ENV: production
+      PORT: ${PORT}
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      VAULT_ADDR: ${VAULT_ADDR}
+      VAULT_TOKEN: ${VAULT_TOKEN}
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+      redis-db:
+        condition: service_started
+volumes:
+  postgres_data:
+  redis_data:

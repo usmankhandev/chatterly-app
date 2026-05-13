@@ -10,9 +10,12 @@ pool:
   name: Default
 
 variables:
+
   IMAGE_NAME: 'chatterly-api'
   DOCKER_USERNAME: 'osmankhandev'
+
 stages:
+
 - stage: Build
   jobs:
   - job: BuildAPIProject
@@ -53,3 +56,59 @@ stages:
         tags: |
           $(Build.BuildId)
           latest
+
+- stage: Deploy
+  displayName: 'Deploy to EC2 Instance'
+  dependsOn: Build
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/development'))
+  jobs:
+  - deployment: DeployToEC2
+    displayName: 'Deploy API to EC2'
+    environment: 'production'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - script: |
+              mkdir -p ~/.ssh
+              echo "$(EC2_SSH_KEY)" > ~/.ssh/ec2_key.pem
+              chmod 600 ~/.ssh/ec2_key.pem
+              # Add EC2 instance to known hosts to avoid SSH prompt
+              ssh-keygen -H $(EC2_HOST) >> ~/.ssh/known_hosts
+            displayName: 'Setup SSH Key'
+
+          - script: |
+              scp -i ~/.ssh/ec2_key.pem docker-compose.yml $(EC2_USER)@$(EC2_HOST):/home/ubuntu/chatterly/docker-compose.yml
+            displayName: 'Copy Docker Compose File to EC2'
+
+          # SSH INTO EC2 INSTANCE and Deploy
+          - script: |
+              ssh -i ~/.ssh/ec2_key.pem $(EC2_USER)@(EC2_HOST) << 'EOF'
+                set -e
+
+                echo "=== Pulling latest image ==="
+                docker pull $(DOCKER_USERNAME)/$(IMAGE_NAME):latest
+                
+                echo "=== Stopping existing containers ==="
+                docker-compose -f /home/ubuntu/chatterly/docker-compose.yml down || true
+
+                echo "=== Deploying with Docker Compose ==="
+
+                cd /home/ubuntu/chatterly
+
+                docker compose --env-file /home/ubuntu/.env.production up -d ---remove-orphans
+
+                echo "=== Running the DB Migrations ==="
+
+                docker compose --env-file /home/ubuntu/.env.production exec -T api npx prisma migrate deploy --schema=./prisma/schema.prisma
+
+                echo "=== Verifying health ===" sleep 10 curl -f http://localhost:3001/health || exit 1
+
+                echo "=== Deploy complete ===" 
+
+              EOF
+            displayName: 'SSH and Deploy to EC2'
+
+          - script: rm -f ~/.ssh/ec2_key.pem
+            displayName: 'Clean up SSH Key'
+            condition: always()
