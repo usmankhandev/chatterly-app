@@ -8,6 +8,10 @@ pr:
 
 pool:
   name: Default
+
+variables:
+  IMAGE_NAME: 'chatterly-api'
+  DOCKER_USERNAME: 'osmankhandev'
 stages:
 - stage: Build
   jobs:
@@ -29,7 +33,7 @@ stages:
       displayName: 'Build Affected Apps Like API In this Time'
 
     - script: |
-        docker build -t chatterly-api:$(Build.BuildId) -f apps/api/Dockerfile .
+        docker build -t $(DOCKER_USERNAME)/$(IMAGE_NAME):$(Build.BuildId) -f apps/api/Dockerfile .
       displayName: 'Docker Build'
 
     - task: Docker@2
@@ -41,7 +45,7 @@ stages:
       displayName: 'Push API Image to Docker Hub'
       inputs:
         command: 'push'
-        repository: 'osmankhandev/chatterly-api'
+        repository: '$(DOCKER_USERNAME)/$(IMAGE_NAME)'
         tags: |
           $(Build.BuildId)
           latest
