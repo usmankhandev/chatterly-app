@@ -8,16 +8,26 @@ pr:
 
 pool: vmImage:'ubuntu-latest'
 
-steps:
-- task: NodeTool@0
-  inputs:
-    versionSpec: '20.x'
-- script: npm ci
-  displayName: 'Install Dependencies'
+stages:
+- stage: Build
+  jobs:
+  - job: BuildAPIProject
+    displayName: 'Build Chatterlys API Project'
 
-- script: npx nx affected --target=build --base=origin/development --head=HEAD
-  displayName: 'Build Affected Apps'
+    steps:
 
-- script: |
-    docker build -t chatterly-api:$(Build.BuildId) -f apps/api/Dockerfile .
-  displayName: 'Docker Build'
+    - task: NodeTool@0
+      inputs:
+        versionSpec: '20.x'
+    - script: npm ci
+      displayName: 'Install Dependencies'
+
+    - script: npx prisma generate --schema=apps/api/prisma/schema.prisma
+      displayName: 'Prisma Generate'
+
+    - script: npx nx affected --target=build --base=origin/development --head=HEAD
+      displayName: 'Build Affected Apps Like API In this Time'
+
+    - script: |
+        docker build -t chatterly-api:$(Build.BuildId) -f apps/api/Dockerfile .
+      displayName: 'Docker Build'
