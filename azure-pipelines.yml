@@ -7,7 +7,7 @@ pr:
 - development
 
 pool:
-  name: 'chatterly-ec2-agent-8gb'
+  name: Default
 stages:
 - stage: Build
   jobs:
