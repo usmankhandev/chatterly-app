@@ -99,53 +99,44 @@ stages:
 
               echo "=== Starting infrastructure first ===" 
               cd /home/ubuntu/chatterly
-              docker compose --env-file /home/ubuntu/.env.production \ up -d postgres-db redis-db
+              docker compose --env-file /home/ubuntu/.env.production up -d postgres-db redis-db
 
 
-              echo "=== Waiting for postgres to be healthy ==="
-              # Wait up to 60 seconds for postgres healthcheck to pass
-              RETRIES=12
-              until docker compose --env-file /home/ubuntu/.env.production \
-                exec -T postgres-db pg_isready -U postgres || [ $RETRIES -eq 0 ]; do
-                echo "Waiting for postgres... ($RETRIES retries left)"
-                RETRIES=$((RETRIES-1))
-                sleep 5
-              done
-
-              if [ $RETRIES -eq 0 ]; then
-                echo "Postgres failed to become ready"
-                docker compose --env-file /home/ubuntu/.env.production logs postgres-db
-                exit 1
-              fi
-
+              echo "=== Waiting for postgres ===" 
+              MAX=24 
+              COUNT=0 
+              until docker exec postgres-db-chatterly pg_isready -U postgres -d chatterly; do
+                COUNT=$((COUNT+1)) 
+                if [ $COUNT -ge $MAX ]; then 
+                  echo "Postgres failed to start" 
+                  docker logs postgres-db-chatterly --tail=20 
+                  exit 1 
+                fi 
+                echo "Waiting to attempt $COUNT of $MAX" 
+                sleep 5 
+              done 
               echo "Postgres is ready"
 
-
-
-              echo "=== Starting containers ==="
+              echo "=== Starting api ===" 
               docker compose --env-file /home/ubuntu/.env.production up -d --remove-orphans
 
-
-              echo "=== Waiting for api to start ===" 
-              RETRIES=12 
-              until curl -sf http://localhost:3001/health || [ $RETRIES -eq 0 ]; do 
-                echo "Waiting for api... ($RETRIES retries left)" 
-                RETRIES=$((RETRIES-1)) sleep 5 
+              echo "=== Waiting for api health check ===" 
+              MAX=24
+              COUNT=0 
+              until curl -sf http://localhost:3001/health > /dev/null; do 
+                COUNT=$((COUNT+1)) 
+                if [ $COUNT -ge $MAX ]; then 
+                  echo "API failed to start — logs:" 
+                  docker logs api-chatterly --tail=50 
+                  exit 1 
+                fi 
+                echo "Waiting for api to attempt $COUNT of $MAX" 
+                sleep 5 
               done
+              echo "API is live"
 
-              if [ $RETRIES -eq 0 ]; then 
-                echo "API health check failed — showing logs:" 
-                docker compose --env-file /home/ubuntu/.env.production logs api 
-                exit 1 
-              fi
-
-              echo "API is live at http://$(EC2_HOST):3001/health"
-
-
-              echo "=== Running migrations ==="
-              docker compose --env-file /home/ubuntu/.env.production \
-                exec -T api \
-                npx prisma migrate deploy --schema=./prisma/schema.prisma
+              echo "=== Running migrations ===" 
+              docker exec api-chatterly npx prisma migrate deploy --schema=./prisma/schema.prisma
 
               echo "=== Cleanup ===" 
               docker logout 
