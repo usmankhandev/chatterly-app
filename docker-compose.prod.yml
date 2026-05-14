@@ -30,23 +30,25 @@ services:
     image: osmankhandev/chatterly-api:latest
     container_name: api-chatterly
     restart: on-failure:5
+    env_file:
+      - .env.production
     ports:
       - '3001:3001'
     network_mode: host # Temporary — switch to bridge and expose ports in production
-    environment:
-      NODE_ENV: production
-      PORT: ${PORT}
-      DATABASE_URL: ${DATABASE_URL}
-      REDIS_URL: ${REDIS_URL}
-      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
-      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
-      VAULT_ADDR: ${VAULT_ADDR}
-      VAULT_TOKEN: ${VAULT_TOKEN}
     depends_on:
       postgres-db:
         condition: service_healthy
       redis-db:
         condition: service_started
+
+    command: sh -c "echo 'Waiting for database...' &&
+      until nc -z 127.0.0.1 5432; do
+      echo 'Database not ready, retrying in 3 seconds...';
+      sleep 3;
+      done &&
+      echo 'Database is ready!' &&
+      npx prisma migrate deploy --schema=./prisma/schema.prisma &&
+      node index.js"
 volumes:
   postgres_data:
   redis_data:
