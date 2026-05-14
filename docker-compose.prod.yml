@@ -48,14 +48,16 @@ services:
       redis-db:
         condition: service_started
 
-    command: sh -c "echo 'Waiting for database...' &&
-      until nc -z 127.0.0.1 5432; do
+    command: sh -c "
+      echo 'Waiting for database...' &&
+      until nc -z postgres-db 5432; do
       echo 'Database not ready, retrying in 3 seconds...';
       sleep 3;
       done &&
       echo 'Database is ready!' &&
       npx prisma migrate deploy --schema=./prisma/schema.prisma &&
-      node index.js"
+      node index.js
+      "
 
 networks:
   chatterly-net:
