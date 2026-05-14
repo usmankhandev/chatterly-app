@@ -6,6 +6,8 @@ services:
     env_file: .env.production
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - chatterly-net
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
       interval: 10s
@@ -22,6 +24,8 @@ services:
     env_file: .env.production
     volumes:
       - redis_data:/data
+    networks:
+      - chatterly-net
     # No ports exposed - internal only
 
   api:
@@ -36,7 +40,8 @@ services:
       - .env.production
     ports:
       - '3001:3001'
-    network_mode: host # Temporary — switch to bridge and expose ports in production
+    networks:
+      - chatterly-net
     depends_on:
       postgres-db:
         condition: service_healthy
@@ -51,6 +56,11 @@ services:
       echo 'Database is ready!' &&
       npx prisma migrate deploy --schema=./prisma/schema.prisma &&
       node index.js"
+
+networks:
+  chatterly-net:
+    driver: bridge
+
 volumes:
   postgres_data:
   redis_data:
