@@ -3,10 +3,7 @@ services:
     image: postgres:16-alpine
     container_name: postgres-db-chatterly
     restart: always
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+    env_file: .env.production
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -22,11 +19,16 @@ services:
     container_name: redis-db-chatterly
     restart: always
     command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    env_file: .env.production
     volumes:
       - redis_data:/data
     # No ports exposed - internal only
 
   api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: runtime
     image: osmankhandev/chatterly-api:latest
     container_name: api-chatterly
     restart: on-failure:5
