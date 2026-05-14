@@ -67,8 +67,14 @@
   EXPOSE 3001
 
 
-  CMD ["sh", "-c", "npx prisma migrate deploy --schema=/app/prisma/schema.prisma && node index.js"]
-
+  CMD ["sh", "-c", "\
+    echo 'Waiting for database...' && \
+    until npx prisma migrate deploy --schema=./prisma/schema.prisma; do \
+      echo 'Database not ready, retrying in 5 seconds...' && \
+      sleep 5; \
+    done && \
+    echo 'Migrations done, starting server...' && \
+    node index.js"]
 
 #   Final /app/ contents (the actual deployed image):                   EE
 #    main.js              compiled Express app  (~100KB)             

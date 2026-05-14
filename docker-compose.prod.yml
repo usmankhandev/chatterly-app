@@ -14,7 +14,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    # No ports exposed — only accessible within Docker network
+    # No ports exposed - only accessible within Docker network
     # Postgres should NEVER be exposed on EC2 public IP
 
   redis-db:
@@ -24,12 +24,12 @@ services:
     command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
     volumes:
       - redis_data:/data
-    # No ports exposed — internal only
+    # No ports exposed - internal only
 
   api:
     image: osmankhandev/chatterly-api:latest
     container_name: api-chatterly
-    restart: always
+    restart: on-failure:5
     ports:
       - '3001:3001'
     environment:
