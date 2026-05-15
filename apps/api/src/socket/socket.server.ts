@@ -4,7 +4,7 @@ import { presenceService } from '../services/presence.service';
 import { notificationEmitter } from './modules/notifications/emitters';
 import { socketAuth } from './middlewares/socketAuth';
 
-// NOTE: notificationEmitter methods require an active io instance
+// NotificationEmitter methods require an active io instance
 
 interface ConnectedUser {
   socketId: string;

@@ -99,7 +99,7 @@ stages:
 
               echo "=== Starting infrastructure first ===" 
               cd /home/ubuntu/chatterly
-              docker compose --env-file /home/ubuntu/chatterly/.env.production up -d postgres-db redis-db
+              docker compose -f docker-compose.prod.yml --env-file /home/ubuntu/chatterly/.env.production up -d postgres-db redis-db
 
 
               echo "=== Waiting for postgres ===" 
@@ -118,7 +118,7 @@ stages:
               echo "Postgres is ready"
 
               echo "=== Starting api ===" 
-              docker compose --env-file /home/ubuntu/chatterly/.env.production up -d --remove-orphans
+              docker compose -f docker-compose.prod.yml --env-file /home/ubuntu/chatterly/.env.production up -d --remove-orphans
 
               echo "=== Waiting for api health check ===" 
               MAX=24
