@@ -10,7 +10,7 @@ export function socketAuth(
     // Verify JWT token
     const token = socket.handshake.auth.token;
     if (!token) {
-      return next(new Error('Authentication error: No token provided'));
+      return next(new Error('Authentication Error: No token provided'));
     }
     const decoded = TokenUtils.verifyAccessToken(token);
     socket.data.userId = decoded.userId;
