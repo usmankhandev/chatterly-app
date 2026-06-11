@@ -80,73 +80,99 @@ stages:
         deploy:
           steps:
 
-          # ── Step 1: Login to Azure + get AKS credentials ──────────
+          # ── CRITICAL: checkout source code ───────────────────────
+          # deployment jobs don't auto-checkout — must be explicit
+          - checkout: self
+            displayName: 'Checkout Source Code'
+
+          # ── Step 1: Azure login + AKS credentials ─────────────────
           - task: AzureCLI@2
-            displayName: 'Azure Login + Get AKS Credentials'
+            displayName: 'Get AKS Credentials'
             inputs:
-              azureSubscription: 'azure-hardcore-service-connection'
+              azureSubscription: 'azure-service-connection'
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
               inlineScript: |
-                echo "=== Getting AKS credentials ==="
                 az aks get-credentials \
                   --resource-group rg-chatterly-dev \
                   --name aks-chatterly-dev \
                   --overwrite-existing
-
-                echo "=== Verifying cluster connection ==="
                 kubectl get nodes
 
-          # ── Step 2: Update image tag to match built image ─────────
+          # ── Step 2: Update image tag ───────────────────────────────
           - script: |
-              echo "=== Updating image tag to $(Build.BuildId) ==="
-              sed -i "s|acrchatterlydev.azurecr.io/chatterly-api:latest|acrchatterlydev.azurecr.io/chatterly-api:$(Build.BuildId)|g" \
+              sed -i "s|crchatterlydev.azurecr.io/chatterly-api:latest|crchatterlydev.azurecr.io/chatterly-api:$(Build.BuildId)|g" \
                 $(Build.SourcesDirectory)/k8s/base/api/deployment.yaml
-
-              echo "=== Verifying image tag update ==="
               grep "image:" $(Build.SourcesDirectory)/k8s/base/api/deployment.yaml
             displayName: 'Update Image Tag'
 
-          # ── Step 3: Apply manifests in correct order ──────────────
-          - script: |
-              echo "=== Applying namespace ==="
-              kubectl apply -f $(Build.SourcesDirectory)/k8s/base/namespace.yaml
-
-              echo "=== Applying config ==="
-              kubectl apply -f $(Build.SourcesDirectory)/k8s/base/configmap.yaml
-              kubectl apply -f $(Build.SourcesDirectory)/k8s/base/secret.yaml
-
-              echo "=== Applying databases ==="
-              kubectl apply -f $(Build.SourcesDirectory)/k8s/base/postgres/
-              kubectl apply -f $(Build.SourcesDirectory)/k8s/base/redis/
-
-              echo "=== Applying API ==="
-              kubectl apply -f $(Build.SourcesDirectory)/k8s/base/api/
+          # ── Step 3: Apply in strict order ─────────────────────────
+          - task: AzureCLI@2
             displayName: 'Apply K8s Manifests'
+            inputs:
+              azureSubscription: 'azure-service-connection'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                echo "=== 1. Namespace ==="
+                kubectl apply -f $(Build.SourcesDirectory)/k8s/base/namespace.yaml
 
-          # ── Step 4: Wait for rollout to complete ──────────────────
-          - script: |
-              echo "=== Waiting for API rollout ==="
-              kubectl rollout status deployment/api \
-                -n chatterly-dev \
-                --timeout=300s
-            displayName: 'Wait for Rollout'
+                echo "=== 2. Config ==="
+                kubectl apply -f $(Build.SourcesDirectory)/k8s/base/configmap.yaml
+                kubectl apply -f $(Build.SourcesDirectory)/k8s/base/secret.yaml
 
-          # ── Step 5: Verify everything is running ──────────────────
-          - script: |
-              echo "=== Pod status ==="
-              kubectl get pods -n chatterly-dev
+                echo "=== 3. Postgres ==="
+                kubectl apply -f $(Build.SourcesDirectory)/k8s/base/postgres/statefulset.yaml
 
-              echo "=== Services ==="
-              kubectl get svc -n chatterly-dev
+                echo "=== 4. Wait for Postgres pod ready ==="
+                kubectl wait --for=condition=ready pod \
+                  -l app=postgres \
+                  -n chatterly-dev \
+                  --timeout=180s
 
-              echo "=== API public IP ==="
-              kubectl get svc api-svc -n chatterly-dev
+                echo "=== 5. Redis ==="
+                kubectl apply -f $(Build.SourcesDirectory)/k8s/base/redis/deployment.yaml
+
+                echo "=== 6. Wait for Redis pod ready ==="
+                kubectl wait --for=condition=ready pod \
+                  -l app=redis \
+                  -n chatterly-dev \
+                  --timeout=120s
+
+                echo "=== 7. API ==="
+                kubectl apply -f $(Build.SourcesDirectory)/k8s/base/api/deployment.yaml
+                kubectl apply -f $(Build.SourcesDirectory)/k8s/base/api/service.yaml
+
+          # ── Step 4: Wait for API rollout ───────────────────────────
+          - task: AzureCLI@2
+            displayName: 'Wait for API Rollout'
+            inputs:
+              azureSubscription: 'azure-service-connection'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                kubectl rollout status deployment/api \
+                  -n chatterly-dev \
+                  --timeout=300s
+
+          # ── Step 5: Verify ─────────────────────────────────────────
+          - task: AzureCLI@2
             displayName: 'Verify Deployment'
+            inputs:
+              azureSubscription: 'azure-service-connection'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                echo "=== Pods ==="
+                kubectl get pods -n chatterly-dev
 
-          # ── Step 6: Cleanup kubeconfig ────────────────────────────
-          - script: |
-              rm -f ~/.kube/config
-              echo "Kubeconfig cleaned"
-            displayName: 'Cleanup'
+                echo "=== Services ==="
+                kubectl get svc -n chatterly-dev
+
+                echo "=== API Public IP ==="
+                kubectl get svc api-svc -n chatterly-dev
+
+          # ── Step 6: Cleanup ────────────────────────────────────────
+          - script: rm -f ~/.kube/config
+            displayName: 'Cleanup kubeconfig'
             condition: always()
