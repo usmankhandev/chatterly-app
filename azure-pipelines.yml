@@ -114,7 +114,14 @@ stages:
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
               inlineScript: |
-                echo "=== 1. Namespace ==="
+                set -x
+
+                echo "=== Build Source Directory ===" echo "$(Build.SourcesDirectory)" 
+                ls $(Build.SourcesDirectory)/k8s/base/ 
+                ls $(Build.SourcesDirectory)/k8s/base/postgres/ 
+                ls $(Build.SourcesDirectory)/k8s/base/redis/
+
+                echo "=== 1. Namespace ===" 
                 kubectl apply -f $(Build.SourcesDirectory)/k8s/base/namespace.yaml
 
                 echo "=== 2. Config ==="
