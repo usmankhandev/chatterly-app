@@ -89,7 +89,7 @@ stages:
           - task: AzureCLI@2
             displayName: 'Get AKS Credentials'
             inputs:
-              azureSubscription: 'azure-service-connection'
+              azureSubscription: 'azure-hardcore-service-connection'
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
               inlineScript: |
@@ -110,7 +110,7 @@ stages:
           - task: AzureCLI@2
             displayName: 'Apply K8s Manifests'
             inputs:
-              azureSubscription: 'azure-service-connection'
+              azureSubscription: 'azure-hardcore-service-connection'
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
               inlineScript: |
@@ -147,7 +147,7 @@ stages:
           - task: AzureCLI@2
             displayName: 'Wait for API Rollout'
             inputs:
-              azureSubscription: 'azure-service-connection'
+              azureSubscription: 'azure-hardcore-service-connection'
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
               inlineScript: |
@@ -159,7 +159,7 @@ stages:
           - task: AzureCLI@2
             displayName: 'Verify Deployment'
             inputs:
-              azureSubscription: 'azure-service-connection'
+              azureSubscription: 'azure-hardcore-service-connection'
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
               inlineScript: |
