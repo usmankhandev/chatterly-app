@@ -116,44 +116,44 @@ stages:
               inlineScript: |
                 set -x
 
-                echo "=== Build Source Directory ===" echo "$(Build.SourcesDirectory)" 
+                echo "=== Files available ===" 
                 ls $(Build.SourcesDirectory)/k8s/base/ 
                 ls $(Build.SourcesDirectory)/k8s/base/postgres/ 
                 ls $(Build.SourcesDirectory)/k8s/base/redis/
 
                 echo "=== 1. Namespace ===" 
-                kubectl apply -f $(Build.SourcesDirectory)/k8s/base/namespace.yaml
+                kubectl apply -f $(Build.SourcesDirectory)/k8s/base/namespace.yaml || exit 1
 
                 echo "=== 2. Config ==="
-                kubectl apply -f $(Build.SourcesDirectory)/k8s/base/configmap.yaml
-                kubectl apply -f $(Build.SourcesDirectory)/k8s/base/secret.yaml
+                kubectl apply -f $(Build.SourcesDirectory)/k8s/base/configmap.yaml || exit 1
+                kubectl apply -f $(Build.SourcesDirectory)/k8s/base/secret.yaml || exit 1
 
                 echo "=== 3. Postgres ==="
-                kubectl apply -f $(Build.SourcesDirectory)/k8s/base/postgres/statefulset.yaml
+                kubectl apply -f $(Build.SourcesDirectory)/k8s/base/postgres/statefulset.yaml || exit 1
 
                 echo "=== Verify postgres StatefulSet created ===" 
-                kubectl get statefulset -n chatterly-dev
+                kubectl get statefulset -n chatterly-dev || exit 1
 
-                kubectl get pods -n chatterly-dev
+                kubectl get pods -n chatterly-dev || exit 1
 
                 echo "=== 4. Wait for Postgres pod ready ==="
                 kubectl wait --for=condition=ready pod \
                   -l app=postgres \
                   -n chatterly-dev \
-                  --timeout=180s
+                  --timeout=180s || exit 1
 
                 echo "=== 5. Redis ==="
-                kubectl apply -f $(Build.SourcesDirectory)/k8s/base/redis/deployment.yaml
+                kubectl apply -f $(Build.SourcesDirectory)/k8s/base/redis/deployment.yaml || exit 1
 
                 echo "=== 6. Wait for Redis pod ready ==="
                 kubectl wait --for=condition=ready pod \
                   -l app=redis \
                   -n chatterly-dev \
-                  --timeout=120s
+                  --timeout=120s || exit 1
 
                 echo "=== 7. API ==="
-                kubectl apply -f $(Build.SourcesDirectory)/k8s/base/api/deployment.yaml
-                kubectl apply -f $(Build.SourcesDirectory)/k8s/base/api/service.yaml
+                kubectl apply -f $(Build.SourcesDirectory)/k8s/base/api/deployment.yaml || exit 1
+                kubectl apply -f $(Build.SourcesDirectory)/k8s/base/api/service.yaml || exit 1
 
           # ── Step 4: Wait for API rollout ───────────────────────────
           - task: AzureCLI@2
@@ -165,7 +165,7 @@ stages:
               inlineScript: |
                 kubectl rollout status deployment/api \
                   -n chatterly-dev \
-                  --timeout=300s
+                  --timeout=300s || exit 1
 
           # ── Step 5: Verify ─────────────────────────────────────────
           - task: AzureCLI@2
