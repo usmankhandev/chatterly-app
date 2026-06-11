@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: chatterly-config
+  namespace: chatterly-dev
+data:
+  # App
+
+  NODE_ENV: "production"
+  PORT: "3001"
+
+  # Postgres connection is non-sensitive as it's only used within the cluster and not exposed externally
+  # Host_name is used instead of IP to allow for better service discovery and flexibility
+  # Host_name is used for k8s service name of postgres, which will resolve to the correct IP address of the postgres pod(s) within the cluster
+  POSTGRES_HOST: "postgres-svc"
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: "chatterly"
+
+  # Redis Connection 
+  REDIS_HOST: "redis-svc"
+  REDIS_PORT: "6379"

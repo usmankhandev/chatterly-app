@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: chatterly-dev
+  labels:
+    app: chatterly
+    team: platform
+    environment: dev
+    managed-by: kubectl

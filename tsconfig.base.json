@@ -1,6 +1,8 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
+    "types": ["node"],
+    "typeRoots": ["node_modules/@types"],
     "rootDir": ".",
     "sourceMap": true,
     "declaration": false,

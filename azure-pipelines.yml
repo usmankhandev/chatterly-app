@@ -47,104 +47,106 @@ stages:
         docker tag $(DOCKER_USERNAME)/$(IMAGE_NAME):$(Build.BuildId) $(DOCKER_USERNAME)/$(IMAGE_NAME):latest
       displayName: 'Tag Docker Image'
 
-    - task: Docker@2
-      displayName: 'Login to Docker Hub'
+    - task: AzureCLI@2
+      displayName: 'Build and Push to ACR'
       inputs:
-        command: 'login'
-        containerRegistry: 'dockerhub-connection'
-    - task: Docker@2
-      displayName: 'Push API Image to Docker Hub'
-      inputs:
-        command: 'push'
-        repository: '$(DOCKER_USERNAME)/$(IMAGE_NAME)'
-        tags: |
-          $(Build.BuildId)
-          latest
+        azureSubscription: 'Azure Hardcore'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          echo "=== Login to ACR ==="
+          az acr login --name acrchatterlydev
 
-- stage: Deploy
-  displayName: 'Deploy to EC2 Instance'
+          echo "=== Build image ==="
+          docker build \
+            -t acrchatterlydev.azurecr.io/chatterly-api:$(Build.BuildId) \
+            -t acrchatterlydev.azurecr.io/chatterly-api:latest \
+            -f apps/api/Dockerfile .
+
+          echo "=== Push to ACR ==="
+          docker push acrchatterlydev.azurecr.io/chatterly-api:$(Build.BuildId)
+          docker push acrchatterlydev.azurecr.io/chatterly-api:latest
+
+- stage: DeployToAKS
+  displayName: 'Deploy to AKS'
   dependsOn: Build
   condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/development'))
   jobs:
-  - deployment: DeployToEC2
-    displayName: 'Deploy API to EC2'
+  - deployment: DeployToAKS
+    displayName: 'Deploy API to AKS'
     environment: 'production'
     strategy:
       runOnce:
         deploy:
           steps:
+
+          # ── Step 1: Login to Azure + get AKS credentials ──────────
+          - task: AzureCLI@2
+            displayName: 'Azure Login + Get AKS Credentials'
+            inputs:
+              azureSubscription: 'Azure Hardcore'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                echo "=== Getting AKS credentials ==="
+                az aks get-credentials \
+                  --resource-group rg-chatterly-dev \
+                  --name aks-chatterly-dev \
+                  --overwrite-existing
+
+                echo "=== Verifying cluster connection ==="
+                kubectl get nodes
+
+          # ── Step 2: Update image tag to match built image ─────────
           - script: |
-              echo "Host is: $(EC2_HOST)"
-              echo "User is: $(EC2_USER)"
-              echo "Key length: ${#EC2_SSH_KEY}"
-            displayName: 'Debug variables'
-          # No Need to SSH since CI Agent is on EC2 already — we can directly run commands on the host machine
+              echo "=== Updating image tag to $(Build.BuildId) ==="
+              sed -i "s|acrchatterlydev.azurecr.io/chatterly-api:latest|acrchatterlydev.azurecr.io/chatterly-api:$(Build.BuildId)|g" \
+                $(Build.SourcesDirectory)/k8s/base/api/deployment.yaml
+
+              echo "=== Verifying image tag update ==="
+              grep "image:" $(Build.SourcesDirectory)/k8s/base/api/deployment.yaml
+            displayName: 'Update Image Tag'
+
+          # ── Step 3: Apply manifests in correct order ──────────────
           - script: |
-              # No SSH needed — agent IS on EC2 already
+              echo "=== Applying namespace ==="
+              kubectl apply -f $(Build.SourcesDirectory)/k8s/base/namespace.yaml
 
-              echo "=== Copying compose file ==="
-              cp $(Build.SourcesDirectory)/docker-compose.prod.yml \
-                 /home/ubuntu/chatterly/docker-compose.yml
+              echo "=== Applying config ==="
+              kubectl apply -f $(Build.SourcesDirectory)/k8s/base/configmap.yaml
+              kubectl apply -f $(Build.SourcesDirectory)/k8s/base/secret.yaml
 
-              cd /home/ubuntu/chatterly
+              echo "=== Applying databases ==="
+              kubectl apply -f $(Build.SourcesDirectory)/k8s/base/postgres/
+              kubectl apply -f $(Build.SourcesDirectory)/k8s/base/redis/
 
-              echo "=== Logging into Docker Hub ==="
-              echo "$(DOCKER_PAT)" | \
-              docker login -u "$(DOCKER_USERNAME)" --password-stdin
+              echo "=== Applying API ==="
+              kubectl apply -f $(Build.SourcesDirectory)/k8s/base/api/
+            displayName: 'Apply K8s Manifests'
 
-              echo "=== Pulling latest images ==="
-              docker pull $(API_IMAGE):latest
-              docker pull postgres:16-alpine
-              docker pull redis:7-alpine
+          # ── Step 4: Wait for rollout to complete ──────────────────
+          - script: |
+              echo "=== Waiting for API rollout ==="
+              kubectl rollout status deployment/api \
+                -n chatterly-dev \
+                --timeout=300s
+            displayName: 'Wait for Rollout'
 
-              echo "=== Starting infrastructure first ===" 
-              cd /home/ubuntu/chatterly
-              docker compose -f docker-compose.prod.yml --env-file /home/ubuntu/chatterly/.env.production up -d postgres-db redis-db
+          # ── Step 5: Verify everything is running ──────────────────
+          - script: |
+              echo "=== Pod status ==="
+              kubectl get pods -n chatterly-dev
 
+              echo "=== Services ==="
+              kubectl get svc -n chatterly-dev
 
-              echo "=== Waiting for postgres ===" 
-              MAX=24 
-              COUNT=0 
-              until docker exec postgres-db-chatterly pg_isready -U postgres -d chatterly; do
-                COUNT=$((COUNT+1)) 
-                if [ $COUNT -ge $MAX ]; then 
-                  echo "Postgres failed to start" 
-                  docker logs postgres-db-chatterly --tail=20 
-                  exit 1 
-                fi 
-                echo "Waiting to attempt $COUNT of $MAX" 
-                sleep 5 
-              done 
-              echo "Postgres is ready"
+              echo "=== API public IP ==="
+              kubectl get svc api-svc -n chatterly-dev
+            displayName: 'Verify Deployment'
 
-              echo "=== Starting api ===" 
-              docker compose -f docker-compose.prod.yml --env-file /home/ubuntu/chatterly/.env.production up -d --remove-orphans
-
-              echo "=== Waiting for api health check ===" 
-              MAX=24
-              COUNT=0 
-              until curl -sf http://localhost:3001/health > /dev/null; do 
-                COUNT=$((COUNT+1)) 
-                if [ $COUNT -ge $MAX ]; then 
-                  echo "API failed to start — logs:" 
-                  docker logs api-chatterly --tail=50 
-                  exit 1 
-                fi 
-                echo "Waiting for api to attempt $COUNT of $MAX" 
-                sleep 5 
-              done
-              echo "API is live"
-
-              echo "=== Running migrations ===" 
-              docker exec api-chatterly npx prisma migrate deploy --schema=./prisma/schema.prisma
-
-              echo "=== Cleanup ===" 
-              docker logout 
-              docker image prune -f
-
-              docker logout
-            displayName: 'Deploy on EC2'
-
-          - script: rm -f ~/.ssh/ec2_key.pem
-            displayName: 'Clean up SSH Key'
+          # ── Step 6: Cleanup kubeconfig ────────────────────────────
+          - script: |
+              rm -f ~/.kube/config
+              echo "Kubeconfig cleaned"
+            displayName: 'Cleanup'
             condition: always()
