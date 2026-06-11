@@ -137,6 +137,7 @@ stages:
                 kubectl get pods -n chatterly-dev || exit 1
 
                 echo "=== 4. Wait for Postgres pod ready ==="
+                sleep 10 # give it a few seconds to start creating the pod
                 kubectl wait --for=condition=ready pod \
                   -l app=postgres \
                   -n chatterly-dev \
