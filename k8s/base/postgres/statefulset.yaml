@@ -37,42 +37,43 @@ spec:
             secretKeyRef:
               name: chatterly-secrets
               key: POSTGRES_PASSWORD
-      readinessProbe:
-        exec:
-          command:
-          - pg_isready
-          - -U
-          - $(POSTGRES_USER)
-          - -d
-          - $(POSTGRES_DB)
-        initialDelaySeconds: 10
-        periodSeconds: 10
-        timeoutSeconds: 5
-        failureThreshold: 5
-      livenessProbe:
-        exec:
-          command:
-          - pg_isready
-          - -U
-          - $(POSTGRES_USER)
-        initialDelaySeconds: 30
-        periodSeconds: 30
-      resources:
-        requests:
-          memory: "256Mi"
-          cpu: "250m"
-        limits:
-          memory: "512Mi"
-          cpu: "500m"
-      volumeMounts:
-      - name: postgres_data
-        mountPath: /var/lib/postgresql/data
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - $(POSTGRES_USER)
+            - -d
+            - $(POSTGRES_DB)
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 5
+        livenessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - $(POSTGRES_USER)
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        volumeMounts:
+        - name: postgres_data
+          mountPath: /var/lib/postgresql/data
 
   volumeClaimTemplates:
   - metadata:
-      name: postgres-pvc
+      name: postgres_data
     spec:
       accessModes: [ "ReadWriteOnce" ]
+      storageClassName: managed-csi
       resources:
         requests:
           storage: 1Gi
