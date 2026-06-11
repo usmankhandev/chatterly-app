@@ -65,12 +65,12 @@ spec:
             memory: "512Mi"
             cpu: "500m"
         volumeMounts:
-        - name: postgres_data
+        - name: postgres-data
           mountPath: /var/lib/postgresql/data
 
   volumeClaimTemplates:
   - metadata:
-      name: postgres_data
+      name: postgres-data
     spec:
       accessModes: [ "ReadWriteOnce" ]
       storageClassName: managed-csi
