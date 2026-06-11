@@ -124,6 +124,11 @@ stages:
                 echo "=== 3. Postgres ==="
                 kubectl apply -f $(Build.SourcesDirectory)/k8s/base/postgres/statefulset.yaml
 
+                echo "=== Verify postgres StatefulSet created ===" 
+                kubectl get statefulset -n chatterly-dev
+
+                kubectl get pods -n chatterly-dev
+
                 echo "=== 4. Wait for Postgres pod ready ==="
                 kubectl wait --for=condition=ready pod \
                   -l app=postgres \
