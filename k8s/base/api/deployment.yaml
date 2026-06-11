@@ -49,7 +49,7 @@ spec:
         - name: DATABASE_URL
           valueFrom:
             secretKeyRef:
-              name: chatterly-secret
+              name: chatterly-secrets
               key: DATABASE_URL
 
       containers:
@@ -64,23 +64,23 @@ spec:
         - name: DATABASE_URL
           valueFrom:
             secretKeyRef:
-              name: chatterly-secret
+              name: chatterly-secrets
               key: DATABASE_URL
 
         - name: JWT_SECRET
           valueFrom:
             secretKeyRef:
-              name: chatterly-secret
+              name: chatterly-secrets
               key: JWT_SECRET
         - name: POSTGRES_USER
           valueFrom:
             secretKeyRef:
-              name: chatterly-secret
+              name: chatterly-secrets
               key: POSTGRES_USER
         - name: POSTGRES_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: chatterly-secret
+              name: chatterly-secrets
               key: POSTGRES_PASSWORD
         readinessProbe:
           httpGet:
