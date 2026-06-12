@@ -67,6 +67,11 @@ spec:
               name: chatterly-secrets
               key: DATABASE_URL
 
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: chatterly-secrets
+              key: REDIS_URL
         - name: JWT_ACCESS_SECRET
           valueFrom:
             secretKeyRef:
