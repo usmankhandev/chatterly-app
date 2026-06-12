@@ -8,6 +8,9 @@ data:
 
   NODE_ENV: "production"
   PORT: "3001"
+  APP_URL: "http://localhost:3000"
+  SERVER_URL: "http://localhost:3001"
+  LOG_LEVEL: "debug"
 
   # Postgres connection is non-sensitive as it's only used within the cluster and not exposed externally
   # Host_name is used instead of IP to allow for better service discovery and flexibility
@@ -19,3 +22,14 @@ data:
   # Redis Connection 
   REDIS_HOST: "redis-svc"
   REDIS_PORT: "6379"
+
+  # JWT expiry — durations, not secrets
+  JWT_ACCESS_EXPIRE: "15m"
+  JWT_REFRESH_EXPIRE: "7d"
+
+  # Email/SMTP — host/port/from are non-sensitive
+  EMAIL_HOST: "sandbox.smtp.mailtrap.io"
+  EMAIL_PORT: "2525"
+  EMAIL_FROM: "Chatterly Support <noreply@chatterly.dev>"
+
+  TWILIO_PHONE_NUMBER: "+923035215727"
