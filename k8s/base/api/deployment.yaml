@@ -67,11 +67,16 @@ spec:
               name: chatterly-secrets
               key: DATABASE_URL
 
-        - name: JWT_SECRET
+        - name: JWT_ACCESS_SECRET
           valueFrom:
             secretKeyRef:
               name: chatterly-secrets
-              key: JWT_SECRET
+              key: JWT_ACCESS_SECRET
+        - name: JWT_REFRESH_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: chatterly-secrets
+              key: JWT_REFRESH_SECRET
         - name: POSTGRES_USER
           valueFrom:
             secretKeyRef:
