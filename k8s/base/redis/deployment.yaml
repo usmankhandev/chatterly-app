@@ -38,8 +38,8 @@ spec:
             command:
             - redis-cli
             - ping
-            initialDelaySeconds: 15
-            periodSeconds: 30
+          initialDelaySeconds: 15
+          periodSeconds: 30
         resources:
           requests:
             memory: "128Mi"
@@ -64,7 +64,7 @@ metadata:
 spec:
   accessModes:
   - ReadWriteOnce
-  StorageClassName: managed-csi
+  storageClassName: managed-csi
   resources:
     requests:
       storage: 1Gi
