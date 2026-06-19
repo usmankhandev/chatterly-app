@@ -10,7 +10,7 @@ pool:
   name: Default
 
 variables:
-- group: chatterly-secrets-ec2-8gb
+- group: chatterly-agent-sse-5979
 - name: DOCKER_USERNAME
   value: 'osmankhandev'
 - name: IMAGE_NAME
