@@ -7,7 +7,7 @@ pr:
 - development
 
 pool:
-  name: Default
+  name: Chatterly
 
 variables:
 - group: chatterly-agent-sse-5979
