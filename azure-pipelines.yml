@@ -115,9 +115,10 @@ stages:
 
           # ── Step 2: Update image tag ───────────────────────────────
           - script: |
-              sed -i "s|crchatterlydev.azurecr.io/chatterly-api:latest|crchatterlydev.azurecr.io/chatterly-api:$(Build.BuildId)|g" \
-                $(Pipeline.Workspace)/k8s/base/api/deployment.yaml
-              grep "image:" $(Pipeline.Workspace)/k8s/base/api/deployment.yaml
+              K8S_PATH="/home/osmankhan/solution-architect/chatterly-agent-azure/_work/1/k8s/base"
+              sed -i "s|acrchatterlydev.azurecr.io/chatterly-api:latest|acrchatterlydev.azurecr.io/chatterly-api:$(Build.BuildId)|g" \
+                $K8S_PATH/api/deployment.yaml
+              grep "image:" $K8S_PATH/api/deployment.yaml
             displayName: 'Update Image Tag'
 
           # ── Step 3: Apply in strict order ─────────────────────────
@@ -128,65 +129,42 @@ stages:
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
               inlineScript: |
-                
-                echo "=== Workspace contents ===" 
-                ls $(Pipeline.Workspace)/
-                echo "=== K8s folder ===" 
-                ls $(Pipeline.Workspace)/k8s/ 2>/dev/null || echo "k8s folder NOT FOUND" 
-                echo "=== Build source dir ===" 
-                echo $(Pipeline.Workspace)
+                # Use exact known path from verify step
+                K8S_PATH="/home/osmankhan/solution-architect/chatterly-agent-azure/_work/1/k8s/base"
 
-                set -x
+                echo "=== Files available ==="
+                ls $K8S_PATH/
 
-                echo "=== Files available ===" 
-                ls $(Pipeline.Workspace)/k8s/base/ 
-                ls $(Pipeline.Workspace)/k8s/base/postgres/ 
-                ls $(Pipeline.Workspace)/k8s/base/redis/
-
-                echo "=== 1. Namespace ===" 
-                kubectl apply -f $(Pipeline.Workspace)/k8s/base/namespace.yaml || exit 1
+                echo "=== 1. Namespace ==="
+                kubectl apply -f $K8S_PATH/namespace.yaml || exit 1
 
                 echo "=== 2. Config ==="
-                kubectl apply -f $(Pipeline.Workspace)/k8s/base/configmap.yaml || exit 1
-                kubectl apply -f $(Pipeline.Workspace)/k8s/base/secret.yaml || exit 1
+                kubectl apply -f $K8S_PATH/configmap.yaml || exit 1
+                kubectl apply -f $K8S_PATH/secret.yaml || exit 1
 
                 echo "=== 3. Postgres ==="
-                kubectl apply -f $(Pipeline.Workspace)/k8s/base/postgres/statefulset.yaml || exit 1
+                kubectl apply -f $K8S_PATH/postgres/statefulset.yaml || exit 1
 
-                echo "=== Verify postgres StatefulSet created ===" 
-                kubectl get statefulset -n chatterly-dev || exit 1
-
-                kubectl get pods -n chatterly-dev || exit 1
-
-                echo "=== 4. Wait for Postgres pod ready ==="
-                sleep 10 # give it a few seconds to start creating the pod
+                sleep 10
                 kubectl wait --for=condition=ready pod \
                   -l app=postgres \
                   -n chatterly-dev \
                   --timeout=180s || exit 1
 
                 echo "=== 5. Redis ==="
-                kubectl apply -f $(Pipeline.Workspace)/k8s/base/redis/deployment.yaml || exit 1
+                kubectl apply -f $K8S_PATH/redis/deployment.yaml || exit 1
 
-                echo "=== 6. Wait for Redis pod ready ==="
                 kubectl wait --for=condition=ready pod \
                   -l app=redis \
                   -n chatterly-dev \
                   --timeout=120s || exit 1
 
                 echo "=== 7. API ==="
-                kubectl apply -f $(Pipeline.Workspace)/k8s/base/api/deployment.yaml || exit 1
-                kubectl apply -f $(Pipeline.Workspace)/k8s/base/api/service.yaml || exit 1
-
+                kubectl apply -f $K8S_PATH/api/deployment.yaml || exit 1
+                kubectl apply -f $K8S_PATH/api/service.yaml || exit 1
 
                 echo "=== 8. Ingress ==="
-                kubectl apply -f $(Pipeline.Workspace)/k8s/base/ingress.yaml || exit 1
-
-                echo "=== 9. Verify Ingress created ==="
-                kubectl get ingress -n chatterly-dev || exit 1
-
-                echo "=== 10. Verify API Service created ==="
-                kubectl get svc api-svc -n chatterly-dev || exit 1
+                kubectl apply -f $K8S_PATH/ingress.yaml || exit 1
 
                 echo "=== Done ==="
 
