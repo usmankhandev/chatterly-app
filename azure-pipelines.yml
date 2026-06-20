@@ -156,6 +156,18 @@ stages:
                 kubectl apply -f $(Build.SourcesDirectory)/k8s/base/api/deployment.yaml || exit 1
                 kubectl apply -f $(Build.SourcesDirectory)/k8s/base/api/service.yaml || exit 1
 
+
+                echo "=== 8. Ingress ==="
+                kubectl apply -f $(Build.SourcesDirectory)/k8s/base/ingress.yaml || exit 1
+
+                echo "=== 9. Verify Ingress created ==="
+                kubectl get ingress -n chatterly-dev || exit 1
+
+                echo "=== 10. Verify API Service created ==="
+                kubectl get svc api-svc -n chatterly-dev || exit 1
+
+                echo "=== Done ==="
+
           # ── Step 4: Wait for API rollout ───────────────────────────
           - task: AzureCLI@2
             displayName: 'Wait for API Rollout'
