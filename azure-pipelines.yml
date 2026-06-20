@@ -87,19 +87,6 @@ stages:
         deploy:
           steps:
 
-          # ── CRITICAL: checkout source code ───────────────────────
-          # deployment jobs don't auto-checkout — must be explicit
-          # - checkout: self
-          #   displayName: 'Checkout Source Code'
-
-          # - script: |
-          #     echo "Agent.BuildDirectory: $(Agent.BuildDirectory)"
-          #     echo "Build.SourcesDirectory: $(Build.SourcesDirectory)"
-          #     echo "Pipeline.Workspace: $(Pipeline.Workspace)"
-          #     find $(Agent.BuildDirectory) -name "*.yaml" -path "*/k8s/*" 2>/dev/null | head -20
-          #     find $(Agent.BuildDirectory) -name "ingress.yaml" 2>/dev/null
-          #   displayName: 'Find k8s files'
-
           - task: DownloadPipelineArtifact@2
             displayName: 'Download K8s Manifests'
             inputs:
