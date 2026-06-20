@@ -102,8 +102,8 @@ stages:
           # ── Step 2: Update image tag ───────────────────────────────
           - script: |
               sed -i "s|crchatterlydev.azurecr.io/chatterly-api:latest|crchatterlydev.azurecr.io/chatterly-api:$(Build.BuildId)|g" \
-                $(Build.SourcesDirectory)/k8s/base/api/deployment.yaml
-              grep "image:" $(Build.SourcesDirectory)/k8s/base/api/deployment.yaml
+                $(System.DefaultWorkingDirectory)/k8s/base/api/deployment.yaml
+              grep "image:" $(System.DefaultWorkingDirectory)/k8s/base/api/deployment.yaml
             displayName: 'Update Image Tag'
 
           # ── Step 3: Apply in strict order ─────────────────────────
@@ -116,28 +116,28 @@ stages:
               inlineScript: |
                 
                 echo "=== Workspace contents ===" 
-                ls $(Build.SourcesDirectory)/
+                ls $(System.DefaultWorkingDirectory)/
                 echo "=== K8s folder ===" 
-                ls $(Build.SourcesDirectory)/k8s/ 2>/dev/null || echo "k8s folder NOT FOUND" 
+                ls $(System.DefaultWorkingDirectory)/k8s/ 2>/dev/null || echo "k8s folder NOT FOUND" 
                 echo "=== Build source dir ===" 
-                echo $(Build.SourcesDirectory)
+                echo $(System.DefaultWorkingDirectory)
 
                 set -x
 
                 echo "=== Files available ===" 
-                ls $(Build.SourcesDirectory)/k8s/base/ 
-                ls $(Build.SourcesDirectory)/k8s/base/postgres/ 
-                ls $(Build.SourcesDirectory)/k8s/base/redis/
+                ls $(System.DefaultWorkingDirectory)/k8s/base/ 
+                ls $(System.DefaultWorkingDirectory)/k8s/base/postgres/ 
+                ls $(System.DefaultWorkingDirectory)/k8s/base/redis/
 
                 echo "=== 1. Namespace ===" 
-                kubectl apply -f $(Build.SourcesDirectory)/k8s/base/namespace.yaml || exit 1
+                kubectl apply -f $(System.DefaultWorkingDirectory)/k8s/base/namespace.yaml || exit 1
 
                 echo "=== 2. Config ==="
-                kubectl apply -f $(Build.SourcesDirectory)/k8s/base/configmap.yaml || exit 1
-                kubectl apply -f $(Build.SourcesDirectory)/k8s/base/secret.yaml || exit 1
+                kubectl apply -f $(System.DefaultWorkingDirectory)/k8s/base/configmap.yaml || exit 1
+                kubectl apply -f $(System.DefaultWorkingDirectory)/k8s/base/secret.yaml || exit 1
 
                 echo "=== 3. Postgres ==="
-                kubectl apply -f $(Build.SourcesDirectory)/k8s/base/postgres/statefulset.yaml || exit 1
+                kubectl apply -f $(System.DefaultWorkingDirectory)/k8s/base/postgres/statefulset.yaml || exit 1
 
                 echo "=== Verify postgres StatefulSet created ===" 
                 kubectl get statefulset -n chatterly-dev || exit 1
@@ -152,7 +152,7 @@ stages:
                   --timeout=180s || exit 1
 
                 echo "=== 5. Redis ==="
-                kubectl apply -f $(Build.SourcesDirectory)/k8s/base/redis/deployment.yaml || exit 1
+                kubectl apply -f $(System.DefaultWorkingDirectory)/k8s/base/redis/deployment.yaml || exit 1
 
                 echo "=== 6. Wait for Redis pod ready ==="
                 kubectl wait --for=condition=ready pod \
@@ -161,12 +161,12 @@ stages:
                   --timeout=120s || exit 1
 
                 echo "=== 7. API ==="
-                kubectl apply -f $(Build.SourcesDirectory)/k8s/base/api/deployment.yaml || exit 1
-                kubectl apply -f $(Build.SourcesDirectory)/k8s/base/api/service.yaml || exit 1
+                kubectl apply -f $(System.DefaultWorkingDirectory)/k8s/base/api/deployment.yaml || exit 1
+                kubectl apply -f $(System.DefaultWorkingDirectory)/k8s/base/api/service.yaml || exit 1
 
 
                 echo "=== 8. Ingress ==="
-                kubectl apply -f $(Build.SourcesDirectory)/k8s/base/ingress.yaml || exit 1
+                kubectl apply -f $(System.DefaultWorkingDirectory)/k8s/base/ingress.yaml || exit 1
 
                 echo "=== 9. Verify Ingress created ==="
                 kubectl get ingress -n chatterly-dev || exit 1
