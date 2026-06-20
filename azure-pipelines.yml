@@ -83,20 +83,7 @@ stages:
               find $(Pipeline.Workspace)/k8s -name "*.yaml" | head -20
             displayName: 'Verify K8s files downloaded'
 
-          # ── Step 1: Azure login + AKS credentials ─────────────────
-          - task: AzureCLI@2
-            displayName: 'Get AKS Credentials'
-            inputs:
-              azureSubscription: 'azure-hardcore-service-connection'
-              scriptType: 'bash'
-              scriptLocation: 'inlineScript'
-              inlineScript: |
-                az aks get-credentials \
-                  --resource-group rg-chatterly-dev \
-                  --name aks-chatterly-dev \
-                  --overwrite-existing
-                kubectl get nodes
-
+          # ── Step 1: Applying K8s Manifests + Deploy ─────────────────
           - task: AzureCLI@2
             displayName: 'Apply K8s Manifests + Deploy'
             inputs:
@@ -104,47 +91,58 @@ stages:
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
               inlineScript: |
+                set -e
+
+                # Get credentials INSIDE same task
+                echo "=== Getting AKS credentials ==="
+                az aks get-credentials \
+                  --resource-group rg-chatterly-dev \
+                  --name aks-chatterly-dev \
+                  --overwrite-existing
+
+                kubectl get nodes
+
                 K8S_PATH="/home/osmankhan/solution-architect/chatterly-agent-azure/_work/1/k8s/base"
 
                 echo "=== Files ==="
-                ls $K8S_PATH/ || { echo "K8S_PATH not found: $K8S_PATH"; exit 1; }
+                ls $K8S_PATH/
 
                 echo "=== 1. Namespace ==="
-                kubectl apply -f $K8S_PATH/namespace.yaml || exit 1
+                kubectl apply -f $K8S_PATH/namespace.yaml
 
                 echo "=== 2. Config ==="
-                kubectl apply -f $K8S_PATH/configmap.yaml || exit 1
-                kubectl apply -f $K8S_PATH/secret.yaml || exit 1
+                kubectl apply -f $K8S_PATH/configmap.yaml
+                kubectl apply -f $K8S_PATH/secret.yaml
 
                 echo "=== 3. Postgres ==="
-                kubectl apply -f $K8S_PATH/postgres/statefulset.yaml || exit 1
+                kubectl apply -f $K8S_PATH/postgres/statefulset.yaml
 
                 sleep 10
                 kubectl wait --for=condition=ready pod \
                   -l app=postgres \
                   -n chatterly-dev \
-                  --timeout=180s || exit 1
+                  --timeout=180s
 
                 echo "=== 5. Redis ==="
-                kubectl apply -f $K8S_PATH/redis/deployment.yaml || exit 1
+                kubectl apply -f $K8S_PATH/redis/deployment.yaml
 
                 kubectl wait --for=condition=ready pod \
                   -l app=redis \
                   -n chatterly-dev \
-                  --timeout=120s || exit 1
+                  --timeout=120s
 
                 echo "=== 7. API ==="
-                kubectl apply -f $K8S_PATH/api/deployment.yaml || exit 1
-                kubectl apply -f $K8S_PATH/api/service.yaml || exit 1
+                kubectl apply -f $K8S_PATH/api/deployment.yaml
+                kubectl apply -f $K8S_PATH/api/service.yaml
 
                 echo "=== 8. Ingress ==="
-                kubectl apply -f $K8S_PATH/ingress.yaml || exit 1
+                kubectl apply -f $K8S_PATH/ingress.yaml
 
-                echo "=== 9. Update image to build: $(Build.BuildId) ==="
+                echo "=== 9. Update image tag ==="
                 kubectl set image deployment/api \
                   api=acrchatterlydev.azurecr.io/chatterly-api:$(Build.BuildId) \
                   run-migrations=acrchatterlydev.azurecr.io/chatterly-api:$(Build.BuildId) \
-                  -n chatterly-dev || exit 1
+                  -n chatterly-dev
 
                 echo "=== Done ==="
           # ── Step 4: Wait for API rollout ───────────────────────────
@@ -155,6 +153,9 @@ stages:
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
               inlineScript: |
+                
+                az aks get-credentials \ --resource-group rg-chatterly-dev \ --name aks-chatterly-dev \ --overwrite-existing
+
                 kubectl rollout status deployment/api \
                   -n chatterly-dev \
                   --timeout=300s 
