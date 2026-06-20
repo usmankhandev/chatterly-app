@@ -67,6 +67,13 @@ stages:
           docker push acrchatterlydev.azurecr.io/chatterly-api:$(Build.BuildId)
           docker push acrchatterlydev.azurecr.io/chatterly-api:latest
 
+    - task: PublishPipelineArtifact@1
+      displayName: 'Publish K8s Manifests'
+      inputs:
+        targetPath: '$(Build.SourcesDirectory)/k8s'
+        artifact: 'k8s-manifests'
+        publishLocation: 'pipeline'
+
 - stage: DeployToAKS
   displayName: 'Deploy to AKS'
   dependsOn: Build
@@ -82,8 +89,28 @@ stages:
 
           # ── CRITICAL: checkout source code ───────────────────────
           # deployment jobs don't auto-checkout — must be explicit
-          - checkout: self
-            displayName: 'Checkout Source Code'
+          # - checkout: self
+          #   displayName: 'Checkout Source Code'
+
+          # - script: |
+          #     echo "Agent.BuildDirectory: $(Agent.BuildDirectory)"
+          #     echo "Build.SourcesDirectory: $(Build.SourcesDirectory)"
+          #     echo "Pipeline.Workspace: $(Pipeline.Workspace)"
+          #     find $(Agent.BuildDirectory) -name "*.yaml" -path "*/k8s/*" 2>/dev/null | head -20
+          #     find $(Agent.BuildDirectory) -name "ingress.yaml" 2>/dev/null
+          #   displayName: 'Find k8s files'
+
+          - task: DownloadPipelineArtifact@2
+            displayName: 'Download K8s Manifests'
+            inputs:
+              buildType: 'current'
+              artifactName: 'k8s-manifests'
+              targetPath: '$(Pipeline.Workspace)/k8s'
+
+          - script: |
+              echo "=== K8s files ==="
+              find $(Pipeline.Workspace)/k8s -name "*.yaml" | head -20
+            displayName: 'Verify K8s files downloaded'
 
           # ── Step 1: Azure login + AKS credentials ─────────────────
           - task: AzureCLI@2
@@ -102,8 +129,8 @@ stages:
           # ── Step 2: Update image tag ───────────────────────────────
           - script: |
               sed -i "s|crchatterlydev.azurecr.io/chatterly-api:latest|crchatterlydev.azurecr.io/chatterly-api:$(Build.BuildId)|g" \
-                $(System.DefaultWorkingDirectory)/k8s/base/api/deployment.yaml
-              grep "image:" $(System.DefaultWorkingDirectory)/k8s/base/api/deployment.yaml
+                $(Pipeline.Workspace)/k8s/base/api/deployment.yaml
+              grep "image:" $(Pipeline.Workspace)/k8s/base/api/deployment.yaml
             displayName: 'Update Image Tag'
 
           # ── Step 3: Apply in strict order ─────────────────────────
@@ -116,28 +143,28 @@ stages:
               inlineScript: |
                 
                 echo "=== Workspace contents ===" 
-                ls $(System.DefaultWorkingDirectory)/
+                ls $(Pipeline.Workspace)/
                 echo "=== K8s folder ===" 
-                ls $(System.DefaultWorkingDirectory)/k8s/ 2>/dev/null || echo "k8s folder NOT FOUND" 
+                ls $(Pipeline.Workspace)/k8s/ 2>/dev/null || echo "k8s folder NOT FOUND" 
                 echo "=== Build source dir ===" 
-                echo $(System.DefaultWorkingDirectory)
+                echo $(Pipeline.Workspace)
 
                 set -x
 
                 echo "=== Files available ===" 
-                ls $(System.DefaultWorkingDirectory)/k8s/base/ 
-                ls $(System.DefaultWorkingDirectory)/k8s/base/postgres/ 
-                ls $(System.DefaultWorkingDirectory)/k8s/base/redis/
+                ls $(Pipeline.Workspace)/k8s/base/ 
+                ls $(Pipeline.Workspace)/k8s/base/postgres/ 
+                ls $(Pipeline.Workspace)/k8s/base/redis/
 
                 echo "=== 1. Namespace ===" 
-                kubectl apply -f $(System.DefaultWorkingDirectory)/k8s/base/namespace.yaml || exit 1
+                kubectl apply -f $(Pipeline.Workspace)/k8s/base/namespace.yaml || exit 1
 
                 echo "=== 2. Config ==="
-                kubectl apply -f $(System.DefaultWorkingDirectory)/k8s/base/configmap.yaml || exit 1
-                kubectl apply -f $(System.DefaultWorkingDirectory)/k8s/base/secret.yaml || exit 1
+                kubectl apply -f $(Pipeline.Workspace)/k8s/base/configmap.yaml || exit 1
+                kubectl apply -f $(Pipeline.Workspace)/k8s/base/secret.yaml || exit 1
 
                 echo "=== 3. Postgres ==="
-                kubectl apply -f $(System.DefaultWorkingDirectory)/k8s/base/postgres/statefulset.yaml || exit 1
+                kubectl apply -f $(Pipeline.Workspace)/k8s/base/postgres/statefulset.yaml || exit 1
 
                 echo "=== Verify postgres StatefulSet created ===" 
                 kubectl get statefulset -n chatterly-dev || exit 1
@@ -152,7 +179,7 @@ stages:
                   --timeout=180s || exit 1
 
                 echo "=== 5. Redis ==="
-                kubectl apply -f $(System.DefaultWorkingDirectory)/k8s/base/redis/deployment.yaml || exit 1
+                kubectl apply -f $(Pipeline.Workspace)/k8s/base/redis/deployment.yaml || exit 1
 
                 echo "=== 6. Wait for Redis pod ready ==="
                 kubectl wait --for=condition=ready pod \
@@ -161,12 +188,12 @@ stages:
                   --timeout=120s || exit 1
 
                 echo "=== 7. API ==="
-                kubectl apply -f $(System.DefaultWorkingDirectory)/k8s/base/api/deployment.yaml || exit 1
-                kubectl apply -f $(System.DefaultWorkingDirectory)/k8s/base/api/service.yaml || exit 1
+                kubectl apply -f $(Pipeline.Workspace)/k8s/base/api/deployment.yaml || exit 1
+                kubectl apply -f $(Pipeline.Workspace)/k8s/base/api/service.yaml || exit 1
 
 
                 echo "=== 8. Ingress ==="
-                kubectl apply -f $(System.DefaultWorkingDirectory)/k8s/base/ingress.yaml || exit 1
+                kubectl apply -f $(Pipeline.Workspace)/k8s/base/ingress.yaml || exit 1
 
                 echo "=== 9. Verify Ingress created ==="
                 kubectl get ingress -n chatterly-dev || exit 1
