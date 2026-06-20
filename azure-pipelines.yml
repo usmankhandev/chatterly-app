@@ -114,6 +114,14 @@ stages:
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
               inlineScript: |
+                
+                echo "=== Workspace contents ===" 
+                ls $(Build.SourcesDirectory)/
+                echo "=== K8s folder ===" 
+                ls $(Build.SourcesDirectory)/k8s/ 2>/dev/null || echo "k8s folder NOT FOUND" 
+                echo "=== Build source dir ===" 
+                echo $(Build.SourcesDirectory)
+
                 set -x
 
                 echo "=== Files available ===" 
