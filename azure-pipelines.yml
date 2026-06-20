@@ -11,12 +11,6 @@ pool:
 
 variables:
 - group: chatterly-agent-sse-5979
-- name: DOCKER_USERNAME
-  value: 'osmankhandev'
-- name: IMAGE_NAME
-  value: 'chatterly-api'
-- name: API_IMAGE
-  value: '$(DOCKER_USERNAME)/$(IMAGE_NAME)'
 
 stages:
 
@@ -39,13 +33,7 @@ stages:
     - script: npx nx build api
       displayName: 'Build Affected Apps Like API In this Time'
 
-    - script: |
-        docker build -t $(DOCKER_USERNAME)/$(IMAGE_NAME):$(Build.BuildId) -f apps/api/Dockerfile .
-      displayName: 'Docker Build'
-
-    - script: |
-        docker tag $(DOCKER_USERNAME)/$(IMAGE_NAME):$(Build.BuildId) $(DOCKER_USERNAME)/$(IMAGE_NAME):latest
-      displayName: 'Tag Docker Image'
+    # Build + Push to ACR
 
     - task: AzureCLI@2
       displayName: 'Build and Push to ACR'
@@ -86,13 +74,9 @@ stages:
       runOnce:
         deploy:
           steps:
-
-          - task: DownloadPipelineArtifact@2
+          - download: current
             displayName: 'Download K8s Manifests'
-            inputs:
-              buildType: 'current'
-              artifactName: 'k8s-manifests'
-              targetPath: '$(Pipeline.Workspace)/k8s'
+            artifact: 'k8s-manifests'
 
           - script: |
               echo "=== K8s files ==="
@@ -114,12 +98,22 @@ stages:
                 kubectl get nodes
 
           # ── Step 2: Update image tag ───────────────────────────────
-          - script: |
-              K8S_PATH="/home/osmankhan/solution-architect/chatterly-agent-azure/_work/1/k8s/base"
-              sed -i "s|acrchatterlydev.azurecr.io/chatterly-api:latest|acrchatterlydev.azurecr.io/chatterly-api:$(Build.BuildId)|g" \
-                $K8S_PATH/api/deployment.yaml
-              grep "image:" $K8S_PATH/api/deployment.yaml
+          - task: AzureCLI@2
             displayName: 'Update Image Tag'
+            inputs:
+              azureSubscription: 'azure-hardcore-service-connection'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                K8S_PATH="$PIPELINE_WORKSPACE/k8s/base"
+                echo "Updating image tag in: $K8S_PATH/api/deployment.yaml"
+
+                sed -i "s|acrchatterlydev.azurecr.io/chatterly-api:latest|acrchatterlydev.azurecr.io/chatterly-api:$(Build.BuildId)|g" $K8S_PATH/api/deployment.yaml
+
+                echo "=== Verified image tag ===" 
+                grep "image:" $K8S_PATH/api/deployment.yaml
+            env:
+              PIPELINE_WORKSPACE: $(PIPELINE_WORKSPACE)
 
           # ── Step 3: Apply in strict order ─────────────────────────
           - task: AzureCLI@2
@@ -131,12 +125,9 @@ stages:
               inlineScript: |
                 
                 set -e 
+                K8S_PATH="$PIPELINE_WORKSPACE/k8s/base"
 
-                set -x
-                # Use exact known path from verify step
-                K8S_PATH="/home/osmankhan/solution-architect/chatterly-agent-azure/_work/1/k8s/base"
-
-                echo "=== Files available ==="
+                echo "=== Files available ===" 
                 ls $K8S_PATH/
 
                 echo "=== 1. Namespace ==="
