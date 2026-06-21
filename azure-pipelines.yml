@@ -92,10 +92,9 @@ stages:
               scriptLocation: 'inlineScript'
               inlineScript: |
                 echo "=== Getting AKS credentials ==="
-                az aks get-credentials \
-                  --resource-group rg-chatterly-dev \
-                  --name aks-chatterly-dev \
-                  --overwrite-existing
+
+                az aks get-credentials --resource-group rg-chatterly-dev --name aks-chatterly-dev --overwrite-existing
+
 
                 kubectl get nodes
                 echo "Nodes fetched: $?"
@@ -167,7 +166,7 @@ stages:
               scriptLocation: 'inlineScript'
               inlineScript: |
                 
-                az aks get-credentials \ --resource-group rg-chatterly-dev \ --name aks-chatterly-dev \ --overwrite-existing
+                az aks get-credentials --resource-group rg-chatterly-dev --name aks-chatterly-dev --overwrite-existing
 
                 kubectl rollout status deployment/api \
                   -n chatterly-dev \
@@ -181,6 +180,9 @@ stages:
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
               inlineScript: |
+                
+                az aks get-credentials --resource-group rg-chatterly-dev --name aks-chatterly-dev --overwrite-existing
+
                 echo "=== Pods ==="
                 kubectl get pods -n chatterly-dev
 
