@@ -164,15 +164,14 @@ stages:
               azureSubscription: 'azure-hardcore-service-connection'
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
-              inlineScript: |
+              inlineScript: |+
                 
                 az aks get-credentials --resource-group rg-chatterly-dev --name aks-chatterly-dev --overwrite-existing
 
                 kubectl rollout status deployment/api \
                   -n chatterly-dev \
                   --timeout=300s 
-
-          # ── Step 5: Verify ─────────────────────────────────────────
+                  
           - task: AzureCLI@2
             displayName: 'Verify Deployment'
             inputs:
@@ -180,8 +179,10 @@ stages:
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
               inlineScript: |
-                
-                az aks get-credentials --resource-group rg-chatterly-dev --name aks-chatterly-dev --overwrite-existing
+                az aks get-credentials \
+                  --resource-group rg-chatterly-dev \
+                  --name aks-chatterly-dev \
+                  --overwrite-existing
 
                 echo "=== Pods ==="
                 kubectl get pods -n chatterly-dev
@@ -189,8 +190,15 @@ stages:
                 echo "=== Services ==="
                 kubectl get svc -n chatterly-dev
 
-                echo "=== API Public IP ==="
-                kubectl get svc api-svc -n chatterly-dev
+                echo "=== Ingress ==="
+                kubectl get ingress -n chatterly-dev
+
+                echo "=== Health Check ==="
+                curl --max-time 10 -sf http://20.81.15.81/health \
+                  && echo "✅ API is healthy" \
+                  || echo "❌ Health check failed"
+
+                echo "=== Verify Complete ==="
 
           # ── Step 6: Cleanup ────────────────────────────────────────
           - script: rm -f ~/.kube/config
