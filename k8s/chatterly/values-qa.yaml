@@ -1,0 +1,25 @@
+namespace: chatterly-qa
+environment: qa
+
+# API-service
+api:
+  replicas: 1
+  image:
+    tag: latest
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "250m"
+
+# Postgres-DB
+
+postgres:
+  storage: 512Mi
+
+# Redis-cache
+
+redis:
+  storage: 512Mi

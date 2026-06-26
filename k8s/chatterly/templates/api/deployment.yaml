@@ -1,0 +1,110 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: api
+spec:
+  replicas: {{ .Values.api.replicas }}
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      initContainers:
+        - name: wait-for-postgres
+          image: busybox:1.28
+          command:
+            - sh
+            - -c
+            - |
+              until nc -z postgres-svc.{{ .Values.namespace }}.svc.cluster.local 5432; do
+                echo "waiting for postgres..."
+                sleep 3
+              done
+        - name: wait-for-redis
+          image: busybox:1.28
+          command:
+            - sh
+            - -c
+            - |
+              until nc -z redis-svc.{{ .Values.namespace }}.svc.cluster.local 6379; do
+                echo "waiting for redis..."
+                sleep 3
+              done
+        - name: run-migrations
+          image: {{ .Values.api.image.repository }}:{{ .Values.api.image.tag }}
+          command:
+            - sh
+            - -c
+            - npx prisma migrate deploy --schema=./prisma/schema.prisma
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: chatterly-secrets
+                  key: DATABASE_URL
+      containers:
+        - name: api
+          image: {{ .Values.api.image.repository }}:{{ .Values.api.image.tag }}
+          imagePullPolicy: {{ .Values.api.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.api.port }}
+          envFrom:
+            - configMapRef:
+                name: chatterly-config
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: chatterly-secrets
+                  key: DATABASE_URL
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: chatterly-secrets
+                  key: REDIS_URL
+            - name: JWT_ACCESS_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: chatterly-secrets
+                  key: JWT_ACCESS_SECRET
+            - name: JWT_REFRESH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: chatterly-secrets
+                  key: JWT_REFRESH_SECRET
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: chatterly-secrets
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: chatterly-secrets
+                  key: POSTGRES_PASSWORD
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.api.port }}
+            initialDelaySeconds: {{ .Values.api.health.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.api.health.readiness.periodSeconds }}
+            failureThreshold: {{ .Values.api.health.readiness.failureThreshold }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.api.port }}
+            initialDelaySeconds: {{ .Values.api.health.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.api.health.liveness.periodSeconds }}
+          resources:
+            requests:
+              memory: {{ .Values.api.resources.requests.memory }}
+              cpu: {{ .Values.api.resources.requests.cpu }}
+            limits:
+              memory: {{ .Values.api.resources.limits.memory }}
+              cpu: {{ .Values.api.resources.limits.cpu }}
