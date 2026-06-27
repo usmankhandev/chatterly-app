@@ -48,8 +48,22 @@ spec:
                 secretKeyRef:
                   name: chatterly-secrets
                   key: DATABASE_URL
+      volumes:
+        - name: secrets-store
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: chatterly-kv-provider
+
+
       containers:
         - name: api
+          volumeMounts:
+          - name: secrets-store
+            mountPath:  "/mnt/secrets"
+            readOnly: true
+
           image: {{ .Values.api.image.repository }}:{{ .Values.api.image.tag }}
           imagePullPolicy: {{ .Values.api.image.pullPolicy }}
           ports:
@@ -108,3 +122,4 @@ spec:
             limits:
               memory: {{ .Values.api.resources.limits.memory }}
               cpu: {{ .Values.api.resources.limits.cpu }}
+

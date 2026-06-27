@@ -67,6 +67,7 @@ ingress:
 # secrets
 
 keyVault:
-  enabled: false
-  name: kv-chatterly
+  enabled: true
+  name: kv-chatterly-dev
   tenantId: 229929b3-9d7d-48ef-b948-b175d426ee74
+  identityClientId: 0cc634fd-dba5-4e58-b816-44850fed678b
