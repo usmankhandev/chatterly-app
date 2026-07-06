@@ -1,8 +1,8 @@
 {
   "name": "api",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "version": "1.0.0",
   "description": "API for the project",
-  "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "apps/api/src",
   "projectType": "application",
   "targets": {
@@ -14,19 +14,25 @@
       }
     },
     "build": {
-      "executor": "nx:run-commands",
-      "outputs": ["{workspaceRoot}/dist/apps/api"],
+      "executor": "@nx/esbuild:esbuild",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
       "options": {
-        "command": "npx tsc --project apps/api/tsconfig.app.json",
-        "cwd": "{workspaceRoot}"
+        "main": "apps/api/src/index.ts",
+        "outputPath": "dist/apps/api",
+        "outputFileName": "index.js",
+        "tsConfig": "apps/api/tsconfig.app.json",
+        "platform": "node",
+        "format": ["cjs"],
+        "bundle": true,
+        "assets": []
       },
       "configurations": {
-        "production": {
-          "command": "npx tsc --project apps/api/tsconfig.app.json",
-          "cwd": "{workspaceRoot}"
-        },
         "development": {
-          "command": "npx tsc --project apps/api/tsconfig.app.json --sourceMap true"
+          "minify": false
+        },
+        "production": {
+          "minify": true
         }
       }
     },
@@ -37,7 +43,6 @@
         "cwd": "apps/api"
       }
     },
-
     "lint": {
       "executor": "nx:run-commands",
       "options": {
@@ -51,14 +56,12 @@
         "command": "dotenv -e apps/api/.env.development -- prisma migrate dev --schema=apps/api/prisma/schema.prisma"
       }
     },
-
     "migrate:test": {
       "executor": "nx:run-commands",
       "options": {
         "command": "dotenv -e apps/api/.env.test -- prisma migrate deploy --schema=apps/api/prisma/schema.prisma"
       }
     },
-
     "migrate:prod": {
       "executor": "nx:run-commands",
       "options": {

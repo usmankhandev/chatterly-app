@@ -1,15 +1,14 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "target": "ES2021" /* Specify ECMAScript target version. */,
-    "module": "commonjs" /* Specify what module code is generated. */,
-    "esModuleInterop": true /* Emit additional JavaScript to ease support for importing CommonJS modules. This enables 'allowSyntheticDefaultImports' for type compatibility. */,
+    "target": "ES2021",
+    "module": "commonjs",
+    "esModuleInterop": true,
     "moduleResolution": "node",
-    /* Specify how TypeScript looks up a file from a given module specifier. */ "forceConsistentCasingInFileNames": true /* Ensure that casing is correct in imports. */,
-    "strict": true /* Enable all strict type-checking options. */,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
     "skipLibCheck": true,
-    "rootDir": "./src" /* Specify the root directory of input files. Use to control the output directory structure with --outDir. */,
-    "outDir": "../../dist/apps/api",
+    "rootDir": "./src",
     "typeRoots": ["../../node_modules/@types"],
     "types": ["node", "jest"],
     "sourceMap": false

@@ -84,3 +84,10 @@ coverage/
 docker-data/
 
 .nvmrc
+
+# never commit compiled output into source
+apps/**/src/**/*.js
+apps/**/src/**/*.d.ts
+libs/**/src/**/*.js
+libs/**/src/**/*.d.ts
+dist/

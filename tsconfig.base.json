@@ -19,7 +19,9 @@
     "paths": {
       "shared-types": ["shared-types/src/index.ts"],
       "shared-utils": ["shared-utils/src/index.ts"],
-      "config": ["config/src/index.ts"]
+      "config": ["config/src/index.ts"],
+      "@chatterly/observability": ["libs/observability/src/index.ts"],
+      "@chatterly/nest-observability": ["libs/nest-observability/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

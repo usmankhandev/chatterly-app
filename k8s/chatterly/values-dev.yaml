@@ -1,5 +1,6 @@
 namespace: chatterly-dev
 environment: dev
+
 api:
   image:
     tag: latest

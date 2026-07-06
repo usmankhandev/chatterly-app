@@ -1,4 +1,4 @@
-// src/app.ts
+//  src/app.ts
 
 import http from 'http';
 import express from 'express';
@@ -15,6 +15,13 @@ import notificationRouter from './routes/notification.route';
 // Import socket server
 import { socketServer } from './socket/socket.server';
 import { redisClientManager } from './config/redisClient';
+import {
+  httpMetricsMiddleware,
+  setServiceName,
+  register,
+} from '@chatterly/observability';
+
+setServiceName('api');
 
 const app = express();
 
@@ -27,6 +34,7 @@ app.use(
 );
 app.use(express.json());
 app.use(cookieParser());
+app.use(httpMetricsMiddleware); // Apply metrics middleware globally
 
 const httpServer = http.createServer(app);
 
@@ -113,6 +121,10 @@ const registerRoutes = () => {
 
   // 6. Post routes LAST (has generic patterns)
   app.use('/api/v1/posts', postRouter);
+  app.use('/metrics', async (_req, res) => {
+    res.set('Content-Type', register.contentType);
+    res.end(await register.metrics());
+  });
   console.log('  ✅ Post routes');
 
   console.log('✅ All routes registered');

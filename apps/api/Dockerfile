@@ -7,21 +7,7 @@
   COPY nx.json tsconfig.base.json ./
   RUN npm ci --prefer-offline --fetch-timeout=300000
 
-  # Copy entire api app folder — preserving the path
-  COPY apps/api ./apps/api
-  COPY libs ./libs
-
-  RUN  echo "=== /app/apps/api contents ===" && \
-      ls -la /app/apps/api/ && \
-      echo "=== tsconfig files ===" && \
-      find /app/apps/api -name "tsconfig*" && \
-      echo "=== Done ==="
   
-  COPY apps/api/prisma ./apps/api/prisma
-
-  RUN npx prisma generate --schema=./apps/api/prisma/schema.prisma
-
-  RUN npx nx build api --configuration=production
 
   # Stage - 2: Builder
 
@@ -40,6 +26,9 @@
 
   COPY libs /app/libs
 
+  RUN npx prisma generate --schema=./apps/api/prisma/schema.prisma
+
+
   RUN npx nx build api --configuration=production
 
   # Final Contents froom the Build Stage Are: 
@@ -52,16 +41,20 @@
 
 
   FROM node:20-alpine AS runtime
+
   WORKDIR /app
-  COPY --from=builder /app/dist/apps/api ./
+  
+  COPY .env.development ./.env.development
+
+  COPY --from=builder /app/dist/ /app/dist/
 
   COPY --from=deps /app/node_modules /app/node_modules
 
-  COPY --from=deps /app/apps/api/prisma /app/prisma
+  COPY --from=builder /app/apps/api/prisma /app/prisma
   
   # COPY .env.development ./
   
-  ENV NODE_ENV=production
+  ENV NODE_ENV=development
   ENV PORT=3001
 
   EXPOSE 3001
@@ -74,7 +67,8 @@
       sleep 5; \
     done && \
     echo 'Migrations done, starting server...' && \
-    node index.js"]
+    npx prisma generate --schema=./prisma/schema.prisma && \
+    node dist/apps/api/index.cjs"]
 
 #   Final /app/ contents (the actual deployed image):                   EE
 #    main.js              compiled Express app  (~100KB)             

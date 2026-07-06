@@ -1,23 +1,19 @@
-# Global Environment Variables
-
+# Global
 namespace: chatterly-dev
 environment: dev
 
-# API-service
-
+# API
 api:
   image:
     repository: acrchatterlydev.azurecr.io/chatterly-api
     tag: latest
     pullPolicy: Always
-
   replicas: 1
   port: 3001
   resources:
     requests:
       memory: "256Mi"
       cpu: "250m"
-
     limits:
       memory: "512Mi"
       cpu: "500m"
@@ -30,7 +26,7 @@ api:
       initialDelaySeconds: 30
       periodSeconds: 30
 
-# Postgres-DB
+# Postgres
 postgres:
   image: postgres:16-alpine
   storage: 1Gi
@@ -43,7 +39,7 @@ postgres:
       memory: "512Mi"
       cpu: "500m"
 
-# Redis-Cache
+# Redis
 redis:
   image: redis:7-alpine
   storage: 1Gi
@@ -58,14 +54,12 @@ redis:
       cpu: "250m"
 
 # Ingress
-
 ingress:
   enabled: true
   className: nginx
   host: ""
 
-# secrets
-
+# Key Vault
 keyVault:
   enabled: true
   name: kv-chatterly-dev
