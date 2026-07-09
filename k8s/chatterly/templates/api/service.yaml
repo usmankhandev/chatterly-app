@@ -3,6 +3,8 @@ kind: Service
 metadata:
   name: api-svc
   namespace: {{ .Values.namespace }}
+  labels:
+    app: api
 spec:
   selector:
     app: api
