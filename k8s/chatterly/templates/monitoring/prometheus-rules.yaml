@@ -1,0 +1,136 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: chatterly-alerts  
+  namespace: {{.Values.namespace}}
+  labels:
+    release: kube-prometheus-stack
+spec:
+  groups:
+    - name: chatterly.pods
+      intervals: 30s
+      rules:
+          # Pod CrashLooping Alert
+
+        - alert: ChatterlyPodCrashLooping
+          expr: |
+            rate(kube_pod_container_status_restarts_total{namespace="{{.Values.namespace}}"}[5m]) > 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is crashlooping"
+            description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} has restarted more than 5 times in the last 5 minutes."
+
+          # API deployment has zero available replicas
+        - alert: ChatterlyAPIDeploymentUnavailable
+          expr: |
+            kube_deployment_status_replicas_available{namespace="{{.Values.namespace}}", deployment="api"} == 0
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Chatterly API deployment has zero available replicas"
+            description: "The Chatterly API deployment in namespace {{ $labels.namespace }} has no available replicas for more than 1 minute."
+
+    - name: chatterly.app
+      intervals: 30s
+      rules:
+          # High Error Rate Alert
+        - alert: ChatterlyHighErrorRate
+          expr: |
+            sum(rate(http_requests_total{namespace="{{.Values.namespace}}", status=~"5.."}[5m])) / sum(rate(http_requests_total{namespace="{{.Values.namespace}}"}[5m])) > 0.05
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High error rate detected in Chatterly api"
+            description: "The error rate for the Chatterly api in namespace {{ $labels.namespace }} has exceeded 5% over the last 5 minutes."  
+    
+          # High Latency Alert
+
+        - alert: ChatterlyHighLatency
+          expr: |
+            histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{namespace="{{.Values.namespace}}"}[5m])) by (le)) > 1
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High latency detected in Chatterly api"
+            description: "The 95th percentile latency for the Chatterly api in namespace {{ $labels.namespace }} has exceeded 1 second over the last 5 minutes."
+
+    - name: chatterly.infrastructure
+      intervals: 30s
+      rules:
+          # Node Disk Pressure Alert
+        - alert: ChatterlyNodeDiskPressure
+          expr: |
+            kube_node_status_condition{namespace="{{.Values.namespace}}", condition="DiskPressure", status="true"} == 1
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Node {{ $labels.node }} in namespace {{ $labels.namespace }} is under disk pressure"
+            description: "Node {{ $labels.node }} in namespace {{ $labels.namespace }} has been under disk pressure for more than 5 minutes."
+        
+        - alert: ChatterlyNodeMemoryPressure
+          expr: |
+            kube_node_status_condition{namespace="{{.Values.namespace}}", condition="MemoryPressure", status="true"} == 1
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Node {{ $labels.node }} in namespace {{ $labels.namespace }} is under memory pressure"
+            description: "Node {{ $labels.node }} in namespace {{ $labels.namespace }} has been under memory pressure for more than 5 minutes."
+        
+        - alert: ChatterlyNodeNetworkUnavailable
+          expr: |
+            kube_node_status_condition{namespace="{{.Values.namespace}}", condition="NetworkUnavailable", status="true"} == 1
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Node {{ $labels.node }} in namespace {{ $labels.namespace }} has network issues"
+            description: "Node {{ $labels.node }} in namespace {{ $labels.namespace }} has been experiencing network issues for more than 5 minutes."
+        
+        - alert: ChatterlyPVCAlmostFull
+          expr: |
+            kube_persistentvolumeclaim_status_phase{namespace="{{.Values.namespace}}", phase="Bound"} == 1 and kube_persistentvolumeclaim_resource_requests_storage_bytes{namespace="{{.Values.namespace}}"} / kube_persistentvolumeclaim_resource_capacity_storage_bytes{namespace="{{.Values.namespace}}"} > 0.9
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "PersistentVolumeClaim {{ $labels.persistentvolumeclaim }} in namespace {{ $labels.namespace }} is almost full"
+            description: "PersistentVolumeClaim {{ $labels.persistentvolumeclaim }} in namespace {{ $labels.namespace }} has used more than 90% of its storage capacity for more than 5 minutes."
+
+        
+        - alert: ChatterlyNodeNotReady
+          expr: |
+            kube_node_status_condition{namespace="{{.Values.namespace}}", condition="Ready", status="false"} == 1
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Node {{ $labels.node }} in namespace {{ $labels.namespace }} is not ready"
+            description: "Node {{ $labels.node }} in namespace {{ $labels.namespace }} has been in a NotReady state for more than 5 minutes."
+
+        
+        - alert: ChatterlyNodeOutOfDisk
+          expr: |
+            kube_node_status_condition{namespace="{{.Values.namespace}}", condition="OutOfDisk", status="true"} == 1
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Node {{ $labels.node }} in namespace {{ $labels.namespace }} is out of disk"
+            description: "Node {{ $labels.node }} in namespace {{ $labels.namespace }} has been out of disk for more than 5 minutes."
+
+        - alert: ChatterlyNodeKubeletNotReady
+          expr: |
+            kube_node_status_condition{namespace="{{.Values.namespace}}", condition="KubeletReady", status="false"} == 1
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Node {{ $labels.node }} in namespace {{ $labels.namespace }} has Kubelet not ready"
+            description: "Node {{ $labels.node }} in namespace {{ $labels.namespace }} has had its Kubelet in a NotReady state for more than 5 minutes."
