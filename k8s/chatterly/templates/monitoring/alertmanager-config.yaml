@@ -1,0 +1,51 @@
+apiVersion: monitoring.coreos.com/v1
+kind: AlertmanagerConfig
+metadata:
+  name: chatterly-alertmanager-config
+  namespace: {{.Values.namespace}}
+  labels:
+    release: kube-prometheus-stack
+spec:
+  route:
+    groupBy: ['alertname', 'namespace']
+    groupWait: 30s
+    groupInterval: 5m
+    repeatInterval: 3h
+    receiver: slack-warnings
+    routes:
+    - matchers:
+        - name: severity
+          value: warning
+      receiver: slack-warnings
+      continue: false
+    - matchers:
+        - name: severity
+          value: critical
+      receiver: slack-critical
+      continue: false
+  receivers:
+    - name: slack-warnings
+      slackConfigs:
+        - apiURL: {{ .Values.slack.webhookUrl }}
+          channel: {{ .Values.slack.channel }}
+          sendResolved: true
+          title: "Chatterly Alert - {{ .CommonLabels.alertname }}"
+          text: |
+            *Alert:* {{ .CommonLabels.alertname }}
+            *Severity:* {{ .CommonLabels.severity }}
+            *Namespace:* {{ .CommonLabels.namespace }}
+            *Description:* {{ .CommonAnnotations.description }}
+    - name: slack-critical
+      slackConfigs:
+        - apiURL: {{ .Values.slack.webhookUrl }}
+          channel: {{ .Values.slack.channel }}
+          sendResolved: true
+          title: "Chatterly Critical Alert - {{ .CommonLabels.alertname }}"
+          text: |
+            *Alert:* {{ .CommonLabels.alertname }}
+            *Severity:* {{ .CommonLabels.severity }}
+            *Namespace:* {{ .CommonLabels.namespace }}
+            *Description:* {{ .CommonAnnotations.description }}
+            
+
+
