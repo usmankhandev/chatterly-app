@@ -2,6 +2,14 @@
 namespace: chatterly-dev
 environment: dev
 
+# Slack alerting
+
+slack:
+  channel: "#chatterly-alerts"
+  secret:
+    name: slack-webhook-secret
+    key: webhook-url
+
 # API
 api:
   image:

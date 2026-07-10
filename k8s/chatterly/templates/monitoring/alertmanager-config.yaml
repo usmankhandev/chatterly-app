@@ -1,51 +1,57 @@
-apiVersion: monitoring.coreos.com/v1
+apiVersion: monitoring.coreos.com/v1alpha1
 kind: AlertmanagerConfig
 metadata:
   name: chatterly-alertmanager-config
-  namespace: {{.Values.namespace}}
+  namespace: {{ .Values.namespace }}
   labels:
     release: kube-prometheus-stack
+
 spec:
   route:
-    groupBy: ['alertname', 'namespace']
+    groupBy: [ "alertname", "namespace" ]
     groupWait: 30s
     groupInterval: 5m
     repeatInterval: 3h
     receiver: slack-warnings
+
     routes:
     - matchers:
-        - name: severity
-          value: warning
+      - name: severity
+        value: warning
       receiver: slack-warnings
       continue: false
+
     - matchers:
-        - name: severity
-          value: critical
+      - name: severity
+        value: critical
       receiver: slack-critical
       continue: false
+
   receivers:
-    - name: slack-warnings
-      slackConfigs:
-        - apiURL: {{ .Values.slack.webhookUrl }}
-          channel: {{ .Values.slack.channel }}
-          sendResolved: true
-          title: "Chatterly Alert - {{ .CommonLabels.alertname }}"
-          text: |
-            *Alert:* {{ .CommonLabels.alertname }}
-            *Severity:* {{ .CommonLabels.severity }}
-            *Namespace:* {{ .CommonLabels.namespace }}
-            *Description:* {{ .CommonAnnotations.description }}
-    - name: slack-critical
-      slackConfigs:
-        - apiURL: {{ .Values.slack.webhookUrl }}
-          channel: {{ .Values.slack.channel }}
-          sendResolved: true
-          title: "Chatterly Critical Alert - {{ .CommonLabels.alertname }}"
-          text: |
-            *Alert:* {{ .CommonLabels.alertname }}
-            *Severity:* {{ .CommonLabels.severity }}
-            *Namespace:* {{ .CommonLabels.namespace }}
-            *Description:* {{ .CommonAnnotations.description }}
-            
+  - name: slack-warnings
+    slackConfigs:
+    - apiURL: 
+        name: {{ .Values.slack.secret.name }}
+        key: {{ .Values.slack.secret.key }}
+      channel: {{ .Values.slack.channel | quote }}
+      sendResolved: true
+      title: 'Chatterly Alert - {{ "{{" }} .CommonLabels.alertname {{ "}}" }}'
+      text: |
+        *Alert:* {{ "{{" }} .CommonLabels.alertname {{ "}}" }}
+        *Severity:* {{ "{{" }} .CommonLabels.severity {{ "}}" }}
+        *Namespace:* {{ "{{" }} .CommonLabels.namespace {{ "}}" }}
+        *Description:* {{ "{{" }} .CommonAnnotations.description {{ "}}" }}
 
-
+  - name: slack-critical
+    slackConfigs:
+    - apiURL:
+        name: {{ .Values.slack.secret.name }}
+        key: {{ .Values.slack.secret.key }}
+      channel: {{ .Values.slack.channel | quote }}
+      sendResolved: true
+      title: 'Chatterly Critical Alert - {{ "{{" }} .CommonLabels.alertname {{ "}}" }}'
+      text: |
+        *Alert:* {{ "{{" }} .CommonLabels.alertname {{ "}}" }}
+        *Severity:* {{ "{{" }} .CommonLabels.severity {{ "}}" }}
+        *Namespace:* {{ "{{" }} .CommonLabels.namespace {{ "}}" }}
+        *Description:* {{ "{{" }} .CommonAnnotations.description {{ "}}" }}

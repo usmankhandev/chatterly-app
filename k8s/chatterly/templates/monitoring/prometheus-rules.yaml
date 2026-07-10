@@ -8,7 +8,7 @@ metadata:
 spec:
   groups:
     - name: chatterly.pods
-      intervals: 30s
+      interval: 30s
       rules:
           # Pod CrashLooping Alert
 
@@ -19,8 +19,8 @@ spec:
           labels:
             severity: critical
           annotations:
-            summary: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is crashlooping"
-            description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} has restarted more than 5 times in the last 5 minutes."
+            summary: "Pod {{`{{`}} $labels.pod {{`}}`}} in namespace {{`{{`}} $labels.namespace {{`}}`}} is crashlooping"
+            description: "Pod {{`{{`}} $labels.pod {{`}}`}} in namespace {{`{{`}} $labels.namespace {{`}}`}} has restarted more than 5 times in the last 5 minutes."
 
           # API deployment has zero available replicas
         - alert: ChatterlyAPIDeploymentUnavailable
@@ -31,10 +31,10 @@ spec:
             severity: critical
           annotations:
             summary: "Chatterly API deployment has zero available replicas"
-            description: "The Chatterly API deployment in namespace {{ $labels.namespace }} has no available replicas for more than 1 minute."
+            description: "The Chatterly API deployment in namespace {{`{{`}} $labels.namespace {{`}}`}} has no available replicas for more than 1 minute."
 
     - name: chatterly.app
-      intervals: 30s
+      interval: 30s
       rules:
           # High Error Rate Alert
         - alert: ChatterlyHighErrorRate
@@ -45,7 +45,7 @@ spec:
             severity: warning
           annotations:
             summary: "High error rate detected in Chatterly api"
-            description: "The error rate for the Chatterly api in namespace {{ $labels.namespace }} has exceeded 5% over the last 5 minutes."  
+            description: "The error rate for the Chatterly api in namespace {{`{{`}} $labels.namespace {{`}}`}} has exceeded 5% over the last 5 minutes."  
     
           # High Latency Alert
 
@@ -57,10 +57,10 @@ spec:
             severity: warning
           annotations:
             summary: "High latency detected in Chatterly api"
-            description: "The 95th percentile latency for the Chatterly api in namespace {{ $labels.namespace }} has exceeded 1 second over the last 5 minutes."
+            description: "The 95th percentile latency for the Chatterly api in namespace {{`{{`}} $labels.namespace {{`}}`}} has exceeded 1 second over the last 5 minutes."
 
     - name: chatterly.infrastructure
-      intervals: 30s
+      interval: 30s
       rules:
           # Node Disk Pressure Alert
         - alert: ChatterlyNodeDiskPressure
@@ -70,8 +70,8 @@ spec:
           labels:
             severity: critical
           annotations:
-            summary: "Node {{ $labels.node }} in namespace {{ $labels.namespace }} is under disk pressure"
-            description: "Node {{ $labels.node }} in namespace {{ $labels.namespace }} has been under disk pressure for more than 5 minutes."
+            summary: "Node {{`{{`}} $labels.node {{`}}`}} in namespace {{`{{`}} $labels.namespace {{`}}`}} is under disk pressure"
+            description: "Node {{`{{`}} $labels.node {{`}}`}} in namespace {{`{{`}} $labels.namespace {{`}}`}} has been under disk pressure for more than 5 minutes."
         
         - alert: ChatterlyNodeMemoryPressure
           expr: |
@@ -80,8 +80,8 @@ spec:
           labels:
             severity: critical
           annotations:
-            summary: "Node {{ $labels.node }} in namespace {{ $labels.namespace }} is under memory pressure"
-            description: "Node {{ $labels.node }} in namespace {{ $labels.namespace }} has been under memory pressure for more than 5 minutes."
+            summary: "Node {{`{{`}} $labels.node {{`}}`}} in namespace {{`{{`}} $labels.namespace {{`}}`}} is under memory pressure"
+            description: "Node {{`{{`}} $labels.node {{`}}`}} in namespace {{`{{`}} $labels.namespace {{`}}`}} has been under memory pressure for more than 5 minutes."
         
         - alert: ChatterlyNodeNetworkUnavailable
           expr: |
@@ -90,8 +90,8 @@ spec:
           labels:
             severity: critical
           annotations:
-            summary: "Node {{ $labels.node }} in namespace {{ $labels.namespace }} has network issues"
-            description: "Node {{ $labels.node }} in namespace {{ $labels.namespace }} has been experiencing network issues for more than 5 minutes."
+            summary: "Node {{`{{`}} $labels.node {{`}}`}} in namespace {{`{{`}} $labels.namespace {{`}}`}} has network issues"
+            description: "Node {{`{{`}} $labels.node {{`}}`}} in namespace {{`{{`}} $labels.namespace {{`}}`}} has been experiencing network issues for more than 5 minutes."
         
         - alert: ChatterlyPVCAlmostFull
           expr: |
@@ -100,8 +100,8 @@ spec:
           labels:
             severity: warning
           annotations:
-            summary: "PersistentVolumeClaim {{ $labels.persistentvolumeclaim }} in namespace {{ $labels.namespace }} is almost full"
-            description: "PersistentVolumeClaim {{ $labels.persistentvolumeclaim }} in namespace {{ $labels.namespace }} has used more than 90% of its storage capacity for more than 5 minutes."
+            summary: "PersistentVolumeClaim {{`{{`}} $labels.persistentvolumeclaim {{`}}`}} in namespace {{`{{`}} $labels.namespace {{`}}`}} is almost full"
+            description: "PersistentVolumeClaim {{`{{`}} $labels.persistentvolumeclaim {{`}}`}} in namespace {{`{{`}} $labels.namespace {{`}}`}} has used more than 90% of its storage capacity for more than 5 minutes."
 
         
         - alert: ChatterlyNodeNotReady
@@ -111,8 +111,8 @@ spec:
           labels:
             severity: critical
           annotations:
-            summary: "Node {{ $labels.node }} in namespace {{ $labels.namespace }} is not ready"
-            description: "Node {{ $labels.node }} in namespace {{ $labels.namespace }} has been in a NotReady state for more than 5 minutes."
+            summary: "Node {{`{{`}} $labels.node {{`}}`}} in namespace {{`{{`}} $labels.namespace {{`}}`}} is not ready"
+            description: "Node {{`{{`}} $labels.node {{`}}`}} in namespace {{`{{`}} $labels.namespace {{`}}`}} has been in a NotReady state for more than 5 minutes."
 
         
         - alert: ChatterlyNodeOutOfDisk
@@ -122,8 +122,8 @@ spec:
           labels:
             severity: critical
           annotations:
-            summary: "Node {{ $labels.node }} in namespace {{ $labels.namespace }} is out of disk"
-            description: "Node {{ $labels.node }} in namespace {{ $labels.namespace }} has been out of disk for more than 5 minutes."
+            summary: "Node {{`{{`}} $labels.node {{`}}`}} in namespace {{`{{`}} $labels.namespace {{`}}`}} is out of disk"
+            description: "Node {{`{{`}} $labels.node {{`}}`}} in namespace {{`{{`}} $labels.namespace {{`}}`}} has been out of disk for more than 5 minutes."
 
         - alert: ChatterlyNodeKubeletNotReady
           expr: |
@@ -132,5 +132,5 @@ spec:
           labels:
             severity: critical
           annotations:
-            summary: "Node {{ $labels.node }} in namespace {{ $labels.namespace }} has Kubelet not ready"
-            description: "Node {{ $labels.node }} in namespace {{ $labels.namespace }} has had its Kubelet in a NotReady state for more than 5 minutes."
+            summary: "Node {{`{{`}} $labels.node {{`}}`}} in namespace {{`{{`}} $labels.namespace {{`}}`}} has Kubelet not ready"
+            description: "Node {{`{{`}} $labels.node {{`}}`}} in namespace {{`{{`}} $labels.namespace {{`}}`}} has had its Kubelet in a NotReady state for more than 5 minutes."
