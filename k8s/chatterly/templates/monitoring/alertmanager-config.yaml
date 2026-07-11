@@ -2,7 +2,7 @@ apiVersion: monitoring.coreos.com/v1alpha1
 kind: AlertmanagerConfig
 metadata:
   name: chatterly-alertmanager-config
-  namespace: {{ .Values.namespace }}
+  namespace: monitoring
   labels:
     release: kube-prometheus-stack
 
