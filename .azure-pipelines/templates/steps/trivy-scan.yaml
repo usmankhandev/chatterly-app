@@ -21,7 +21,7 @@ steps:
       echo "Installing Trivy"
       curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
 
-      trivy image --severity ${{parameters.severity}} --exit-code ${{parameters.exitCodes}} --no-progress ${{parameters.dockerImage}}
+      trivy image --severity ${{parameters.trivySeverity}} --exit-code ${{parameters.exitCodes}} --no-progress ${{parameters.dockerImage}}
     displayName: 'Trivy Scan for ${{parameters.dockerImage}}'
     continueOnError: false
   
