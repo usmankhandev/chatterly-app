@@ -17,6 +17,6 @@ steps:
 
       trivy image --severity ${{parameters.severity}} --exit-code ${{parameters.exitCodes}} --no-progress ${{parameters.dockerImage}}
     displayName: 'Trivy Scan for ${{parameters.dockerImage}}'
-    continueonError: false
+    continueOnError: false
   
-  
+
