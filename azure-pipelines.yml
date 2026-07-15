@@ -1,206 +1,25 @@
 trigger:
-- main
 - development
-
 pr:
-- main
 - development
-
+- main
 pool:
   name: Chatterly
 
 variables:
-- group: chatterly-agent-sse-5979
+- group: 'chatterly-agent-sse-5979'
+- template: ./.azure-pipelines/templates/variables/common.yaml
 
-stages:
-
-- stage: Build
-  jobs:
-  - job: BuildAPIProject
-    displayName: 'Build Chatterlys API Project'
-
-    steps:
-
-    - task: NodeTool@0
-      inputs:
-        versionSpec: '20.x'
-    - script: npm ci
-      displayName: 'Install Dependencies'
-
-    - script: npx prisma generate --schema=apps/api/prisma/schema.prisma
-      displayName: 'Prisma Generate'
-
-    - script: npx nx build api
-      displayName: 'Build Affected Apps Like API In this Time'
-
-    # Build + Push to ACR
-
-    - task: AzureCLI@2
-      displayName: 'Build and Push to ACR'
-      inputs:
-        azureSubscription: 'azure-hardcore-service-connection'
-        scriptType: 'bash'
-        scriptLocation: 'inlineScript'
-        inlineScript: |
-          echo "=== Login to ACR ==="
-          az acr login --name acrchatterlydev
-
-          echo "=== Build image ==="
-          docker build \
-            -t acrchatterlydev.azurecr.io/chatterly-api:$(Build.BuildId) \
-            -t acrchatterlydev.azurecr.io/chatterly-api:latest \
-            -f apps/api/Dockerfile .
-
-          echo "=== Push to ACR ==="
-          docker push acrchatterlydev.azurecr.io/chatterly-api:$(Build.BuildId)
-          docker push acrchatterlydev.azurecr.io/chatterly-api:latest
-
-    - task: PublishPipelineArtifact@1
-      displayName: 'Publish K8s Manifests'
-      inputs:
-        targetPath: '$(Build.SourcesDirectory)/k8s'
-        artifact: 'k8s-manifests'
-        publishLocation: 'pipeline'
-
-- stage: DeployToAKS
-  displayName: 'Deploy to AKS'
-  dependsOn: Build
-  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/development'))
-  jobs:
-  - deployment: DeployToAKS
-    displayName: 'Deploy API to AKS'
-    environment: 'production'
-    strategy:
-      runOnce:
-        deploy:
-          steps:
-          - download: current
-            displayName: 'Download K8s Manifests'
-            artifact: 'k8s-manifests'
-
-          - script: |
-              echo "=== K8s files ==="
-              find $(Pipeline.Workspace)/k8s -name "*.yaml" | head -20
-            displayName: 'Verify K8s files downloaded'
-
-          # ── Step 1: Applying K8s Manifests + Deploy ─────────────────
-          - task: AzureCLI@2
-            displayName: 'Apply K8s Manifests + Deploy'
-            inputs:
-              azureSubscription: 'azure-hardcore-service-connection'
-              scriptType: 'bash'
-              scriptLocation: 'inlineScript'
-              inlineScript: |
-                echo "=== Getting AKS credentials ==="
-
-                az aks get-credentials --resource-group rg-chatterly-dev --name aks-chatterly-dev --overwrite-existing
-
-
-                kubectl get nodes
-                echo "Nodes fetched: $?"
-
-                K8S_PATH="/home/osmankhan/solution-architect/chatterly-agent-azure/_work/1/k8s/base"
-
-                echo "=== Files ==="
-                ls $K8S_PATH/
-                echo "ls exit code: $?"
-
-                echo "=== 1. Namespace ==="
-                kubectl apply -f $K8S_PATH/namespace.yaml
-                echo "Namespace exit code: $?"
-
-                echo "=== 2. Config ==="
-                kubectl apply -f $K8S_PATH/configmap.yaml
-                echo "ConfigMap exit code: $?"
-
-                kubectl apply -f $K8S_PATH/secret.yaml
-                echo "Secret exit code: $?"
-
-                echo "=== 3. Postgres ==="
-                kubectl apply -f $K8S_PATH/postgres/statefulset.yaml
-                echo "Postgres exit code: $?"
-
-                sleep 10
-
-                kubectl wait --for=condition=ready pod \
-                  -l app=postgres \
-                  -n chatterly-dev \
-                  --timeout=180s
-                echo "Postgres wait exit code: $?"
-
-                echo "=== 5. Redis ==="
-                kubectl apply -f $K8S_PATH/redis/deployment.yaml
-                echo "Redis exit code: $?"
-
-                kubectl wait --for=condition=ready pod \
-                  -l app=redis \
-                  -n chatterly-dev \
-                  --timeout=120s
-                echo "Redis wait exit code: $?"
-
-                echo "=== 7. API ==="
-                kubectl apply -f $K8S_PATH/api/deployment.yaml
-                echo "API deployment exit code: $?"
-
-                kubectl apply -f $K8S_PATH/api/service.yaml
-                echo "API service exit code: $?"
-
-                echo "=== 8. Ingress ==="
-                kubectl apply -f $K8S_PATH/ingress.yaml
-                echo "Ingress exit code: $?"
-
-                echo "=== 9. Update image ==="
-                kubectl set image deployment/api \
-                  api=acrchatterlydev.azurecr.io/chatterly-api:$(Build.BuildId) \
-                  run-migrations=acrchatterlydev.azurecr.io/chatterly-api:$(Build.BuildId) \
-                  -n chatterly-dev
-                echo "Image update exit code: $?"
-
-                echo "=== Done ==="
-          # ── Step 4: Wait for API rollout ───────────────────────────
-          - task: AzureCLI@2
-            displayName: 'Wait for API Rollout'
-            inputs:
-              azureSubscription: 'azure-hardcore-service-connection'
-              scriptType: 'bash'
-              scriptLocation: 'inlineScript'
-              inlineScript: |+
-                
-                az aks get-credentials --resource-group rg-chatterly-dev --name aks-chatterly-dev --overwrite-existing
-
-                kubectl rollout status deployment/api \
-                  -n chatterly-dev \
-                  --timeout=300s 
-                  
-          - task: AzureCLI@2
-            displayName: 'Verify Deployment'
-            inputs:
-              azureSubscription: 'azure-hardcore-service-connection'
-              scriptType: 'bash'
-              scriptLocation: 'inlineScript'
-              inlineScript: |
-                az aks get-credentials \
-                  --resource-group rg-chatterly-dev \
-                  --name aks-chatterly-dev \
-                  --overwrite-existing
-
-                echo "=== Pods ==="
-                kubectl get pods -n chatterly-dev
-
-                echo "=== Services ==="
-                kubectl get svc -n chatterly-dev
-
-                echo "=== Ingress ==="
-                kubectl get ingress -n chatterly-dev
-
-                echo "=== Health Check ==="
-                curl --max-time 10 -sf http://20.81.15.81/health \
-                  && echo "✅ API is healthy" \
-                  || echo "❌ Health check failed"
-
-                echo "=== Verify Complete ==="
-
-          # ── Step 6: Cleanup ────────────────────────────────────────
-          - script: rm -f ~/.kube/config
-            displayName: 'Cleanup kubeconfig'
-            condition: always()
+extends:
+  template: ./.azure-pipelines/templates/stages/build-node.yaml
+  parameters:
+    serviceName: api
+    dockerImage: chatterly-api
+    acrName: acrchatterlydev
+    helmChart: ./k8s/chatterly
+    helmRelease: chatterly-dev
+    namespace: chatterly-dev
+    valuesFile: ./k8s/chatterly/values-dev.yaml
+    healthCheckUrl: http://20.81.15.81/health
+    runTests: true
+    runTrivy: true

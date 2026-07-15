@@ -1,0 +1,22 @@
+parameters:
+  - name: dockerImage
+    type: string
+    default: ''
+  - name: severity
+    type: string
+    default: 'HIGH, CRITICAL'
+  - name: exitCodes
+    type: string
+    default: '1, 2'
+
+steps:
+  - script: |
+
+      echo "Installing Trivy"
+      curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+
+      trivy image --severity ${{parameters.severity}} --exit-code ${{parameters.exitCodes}} --no-progress ${{parameters.dockerImage}}
+    displayName: 'Trivy Scan for ${{parameters.dockerImage}}'
+    continueonError: false
+  
+  

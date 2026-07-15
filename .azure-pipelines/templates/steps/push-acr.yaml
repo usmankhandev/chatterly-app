@@ -1,0 +1,39 @@
+parameters:
+  - name: dockerImage
+    type: string
+    default: ''
+  - name: dockerfile
+    type: string
+  - name: acrName
+    type: string
+    default: 'acrchatterlydev'
+  - name: acrResourceGroup
+    type: string
+    default: 'rg-chatterly-dev'
+  - name: azureSubscription
+    type: string
+    default: 'azure-hardcore-service-connection'
+
+
+steps:
+  - task: AzureCLI@2
+    displayName: 'Push to ACR: ${{ parameters.dockerImage }}:$(Build.BuildId)'
+    inputs:
+      azureSubscription: ${{ parameters.azureSubscription }}
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: |
+        ACR_TOKEN=$(az acr login \
+          --name ${{ parameters.acrName }} \
+          --expose-token \
+          --output tsv \
+          --query accessToken)
+
+        echo $ACR_TOKEN | docker login \
+          ${{ parameters.acrName }}.azurecr.io \
+          --username 00000000-0000-0000-0000-000000000000 \
+          --password-stdin
+
+        docker push ${{ parameters.acrName }}.azurecr.io/${{ parameters.dockerImage }}:$(Build.BuildId)
+        docker push ${{ parameters.acrName }}.azurecr.io/${{ parameters.dockerImage }}:latest        
+        echo " Pushed: ${{ parameters.dockerImage }}:$(Build.BuildId) "

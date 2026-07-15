@@ -1,0 +1,7 @@
+variables:
+  ACR_NAME: acrchatterlydev
+  ACR_LOGIN_SERVER: acrchatterlydev.azurecr.io
+  ACR_REPOSITORY: chatterly-api
+  ACR_RESOURCE_GROUP: rg-chatterly-dev
+  AKS_CLUSTER_NAME: aks-chatterly-dev
+  AZURE_SUBSCRIPTION: azure-hardcore-service-connection

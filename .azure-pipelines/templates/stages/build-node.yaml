@@ -1,0 +1,129 @@
+parameters:
+  - name: serviceName
+    type: string
+  - name: dockerImage
+    type: string
+  - name: acrName
+    type: string
+    default: acrchatterlydev
+  - name: acrResourceGroup
+    type: string
+    default: rg-chatterly-dev
+  - name: azureSubscription
+    type: string
+    default: azure-hardcore-service-connection
+  - name: helmChart
+    type: string
+  - name: helmRelease
+    type: string
+  - name: namespace
+    type: string
+  - name: valuesFile
+    type: string
+  - name: healthCheckUrl
+    type: string
+  - name: dockerfile
+    type: string
+    default: 'apps/api/Dockerfile'
+  - name: prismaSchema
+    type: string
+    default: 'apps/api/prisma/schema.prisma'
+  - name: nodeVersion
+    type: string
+    default: '20.x'
+  - name: runTests
+    type: boolean
+    default: false
+  - name: runTrivy
+    type: boolean
+    default: true
+  - name: trivySeverity
+    type: string
+    default: 'CRITICAL, HIGH'
+
+stages:
+
+  - stage: Build_${{parameters.serviceName}}
+    displayName: 'Building: ${{parameters.serviceName}}'
+    jobs:
+      - job: Build_${{parameters.serviceName}}
+        displayName: 'Build + Scan + Push'
+        steps:
+          - template: ../steps/install-deps.yaml
+            parameters:
+              nodeVersion: ${{parameters.nodeVersion}}
+              prismaSchema: ${{parameters.prismaSchema}}
+          - template: ../steps/nx-build.yaml
+            parameters:
+              projectName: ${{parameters.serviceName}}
+          - template: ../steps/docker-build.yaml
+            parameters:
+              dockerImage: ${{parameters.dockerImage}}
+              dockerfile: ${{parameters.dockerfile}}
+              acrName: ${{parameters.acrName}}
+          - ${{ if eq(parameters.runTrivy, true) }}:
+            - template: ../steps/trivy-scan.yaml
+              parameters:
+                dockerImage: ${{parameters.dockerImage}}
+                acrName: ${{parameters.acrName}}
+                runTrivy: ${{parameters.runTrivy}}
+                trivySeverity: ${{parameters.trivySeverity}}
+          - template: ../steps/push-acr.yaml
+            parameters:
+              dockerImage: ${{parameters.dockerImage}}
+              dockerfile: ${{parameters.dockerfile}}
+              acrName: ${{parameters.acrName}}
+              acrResourceGroup: ${{parameters.acrResourceGroup}}
+              azureSubscription: ${{parameters.azureSubscription}}
+
+          - task: PublishPipelineArtifact@1
+            displayName: 'Publish Helm Chart'
+            inputs:
+              targetPath: '$(Build.SourceDirectory)/${{parameters.helmChart}}'
+              artifactName: 'helm-chart'
+              publishLocation: 'pipeline'
+  
+  - stage: Deploy_${{parameters.serviceName}}
+    displayName: 'Deploying: ${{parameters.serviceName}}'
+    dependsOn: Build_${{parameters.serviceName}}
+    condition: |
+      and(
+        succeeded(),
+        eq(variables['Build.SourceBranch'], 'refs/heads/main')
+      )
+    jobs:
+      - deployment: Deploy
+        displayName: 'Helm Deploy: ${{parameters.helmRelease}} to AKS'
+        environment: 'production'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: DownloadPipelineArtifact@2
+                  displayName: 'Download Helm Chart Artifact'
+                  inputs:
+                    buildType: 'current'
+                    artifact: 'helm-chart'
+                    targetPath: '$(pipeline.Workspace)/helm-chart'
+                - task: AzureCLI@2
+                  displayName: 'Helm Deploy: ${{parameters.helmRelease}}'
+                  inputs:
+                    azureSubscription: ${{parameters.azureSubscription}}
+                    scriptType: bash
+                    scriptLocation: inlineScript
+                    inlineScript: |
+                      az aks get-credentials --resource-group ${{parameters.acrResourceGroup}} --name $(AKS_CLUSTER_NAME)
+                      helm upgrade --install ${{ parameters.helmRelease }} $PIPELINE_WORKSPACE/helm-chart --namespace ${{ parameters.namespace }} --create-namespace --set api.image.tag=$(Build.BuildId) -f $PIPELINE_WORKSPACE/helm-chart/${{ parameters.valuesFile }} --wait --timeout 10m --atomic
+
+                      echo "Deployed: ${{ parameters.dockerImage }}:$(Build.BuildId)"
+                  env:
+                    PIPELINE_WORKSPACE: $(Pipeline.Workspace)
+                - template: ../steps/verify-deploy.yaml
+                  parameters:
+                    namespace: ${{parameters.namespace}}
+                    healthCheckUrl: ${{parameters.healthCheckUrl}}  
+                - script: rm -f ~/.kube/config
+                  displayName: 'Clean up kubeconfig'
+                  condition: always()
+
+

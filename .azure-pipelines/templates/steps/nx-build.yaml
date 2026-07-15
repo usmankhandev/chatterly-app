@@ -1,0 +1,12 @@
+parameters:
+  - name: projectName
+    type: string
+    default: ''
+  - name: configuration
+    type: string
+    default: 'production'
+
+steps:
+  - script: |
+      npx nx build ${{parameters.projectName}} --configuration=${{parameters.configuration}} --skip-nx-cache
+      displayName: 'Build ${{parameters.projectName}}'

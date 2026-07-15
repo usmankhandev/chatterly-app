@@ -1,0 +1,15 @@
+parameters:
+  - name: dockerImage
+    type: string
+    default: ''
+  - name: dockerfile
+    type: string
+    default: 'apps/api/Dockerfile'
+  - name: acrName
+    type: string
+    default: 'acrchatterlydev'
+
+steps:
+  - script: | 
+      docker build -t ${{parameters.acrName}}.azurecr.io/${{parameters.dockerImage}}:$(Build.BuildId) -t ${{parameters.acrName}}.azurecr.io/${{parameters.dockerImage}}:latest -f ${{parameters.dockerfile}} .
+    displayName: 'Build Docker Image ${{parameters.dockerImage}}'

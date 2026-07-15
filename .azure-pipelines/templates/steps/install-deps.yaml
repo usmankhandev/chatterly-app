@@ -1,0 +1,20 @@
+parameters:
+  - name: nodeVersion
+    type: string
+    default: '20.x'
+  - name: prismaSchema
+    type: string
+    default: ''
+
+steps:
+  - task: NodeTool@0
+    displayName: 'Setup Node ${{parameters.nodeVersion}}'
+    inputs:
+      versionSpec: '${{parameters.nodeVersion}}'
+
+  - script: npm ci
+    displayName: 'Install NPM Dependencies'
+  
+  - ${{ if ne(parameters.prismaSchema, '')}}:
+    - script: npx prisma generate --schema=${{parameters.prismaSchema}}
+      displayName: 'Generating Prisma Client'

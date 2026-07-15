@@ -1,0 +1,26 @@
+parameters:
+- name: namespace
+  type: string
+- name: healthCheckUrl
+  type: string
+- name: azureSubscription
+  type: string
+  default: azure-hardcore-service-connection
+steps:
+- task: AzureCLI@2
+  displayName: 'Verify Deployment'
+  inputs:
+    azureSubscription: ${{ parameters.azureSubscription }}
+    scriptType: bash
+    scriptLocation: inlineScript
+    inlineScript: |
+      az aks get-credentials --resource-group $(AKS_RESOURCE_GROUP) --name $(AKS_CLUSTER_NAME) --overwrite-existing
+
+      echo "=== Pods ==="
+      kubectl get pods -n ${{ parameters.namespace }}
+
+      echo "=== Deployed image ==="
+      kubectl get deployment api -n ${{ parameters.namespace }} -o jsonpath='{.spec.template.spec.containers[0].image}'
+
+      echo "=== Health check ==="
+      curl --max-time 15 -sf ${{ parameters.healthCheckUrl }} && echo " Healthy " || echo " Health check failed "
