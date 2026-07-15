@@ -2,12 +2,18 @@ parameters:
   - name: dockerImage
     type: string
     default: ''
-  - name: severity
+  - name: trivySeverity
     type: string
     default: 'HIGH, CRITICAL'
   - name: exitCodes
     type: string
     default: '1, 2'
+  - name: runTrivy
+    type: boolean
+    default: true
+  - name: acrName
+    type: string
+    default: 'acrchatterlydev'
 
 steps:
   - script: |
