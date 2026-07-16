@@ -91,3 +91,4 @@ apps/**/src/**/*.d.ts
 libs/**/src/**/*.js
 libs/**/src/**/*.d.ts
 dist/
+tmp/
