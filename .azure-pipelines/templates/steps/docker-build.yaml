@@ -4,7 +4,7 @@ parameters:
     default: ''
   - name: dockerfile
     type: string
-    default: 'apps/api/Dockerfile'
+    default: './apps/api/Dockerfile'
   - name: acrName
     type: string
     default: 'acrchatterlydev'
