@@ -9,6 +9,8 @@ pool:
 variables:
 - group: 'chatterly-agent-sse-5979'
 - template: ./.azure-pipelines/templates/variables/common.yaml
+- name: system.debug
+  value: 'true'
 
 extends:
   template: ./.azure-pipelines/templates/stages/build-node.yaml
