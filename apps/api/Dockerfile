@@ -44,15 +44,13 @@
 
   WORKDIR /app
   
-  COPY .env.development ./.env.development
-
   COPY --from=builder /app/dist/ /app/dist/
 
   COPY --from=deps /app/node_modules /app/node_modules
 
   COPY --from=builder /app/apps/api/prisma /app/prisma
   
-  # COPY .env.development ./
+  COPY .env.development ./
   
   ENV NODE_ENV=development
   ENV PORT=3001
