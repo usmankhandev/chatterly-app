@@ -9,4 +9,4 @@ parameters:
 steps:
   - script: |
       npx nx build ${{parameters.projectName}} --configuration=${{parameters.configuration}} --skip-nx-cache
-      displayName: 'Build ${{parameters.projectName}}'
+    displayName: 'Build ${{parameters.projectName}}'
