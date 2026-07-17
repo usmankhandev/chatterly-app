@@ -61,7 +61,7 @@ npm-debug.log*
 
 # Env
 .env
-
+.env*
 
 # Prisma
 prisma/migrations/*/README.md
