@@ -1,6 +1,6 @@
 # Stage - 1: Dependency Istaller:
 
-  FROM node:20-alpine AS deps
+  FROM node:20-alpine3.21 AS deps
   WORKDIR /app
 
   COPY package.json package-lock.json ./
@@ -11,9 +11,8 @@
 
   # Stage - 2: Builder
 
-  FROM node:20-alpine AS builder
-
-  # This created a fresh filesystem again with only node:20-alpine base.
+  FROM node:20-alpine3.21 AS builder
+  # This created a fresh filesystem again with only node:20-alpine3.21 base.
   # So far, node_modules from stage 1 does not exist here yet.
 
   WORKDIR /app 
@@ -40,8 +39,7 @@
   #       dist/apps/api/main.js (Requried file is main.js since this will be the entry point for our runtime stage)
 
 
-  FROM node:20-alpine AS runtime
-
+  FROM node:20-alpine3.21 AS runtime
   WORKDIR /app
   
   COPY --from=builder /app/dist/ /app/dist/

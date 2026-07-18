@@ -1,0 +1,31 @@
+# Trivy CVE Exceptions — Chatterly API
+# CVEs present in node:20-alpine3.21 base image OS/npm packages
+# No upstream fix available in Alpine package repo as of 2026-07-19
+#
+# Mitigating controls:
+#   - TLS termination handled at nginx Ingress layer (not app layer)
+#   - App runs in private AKS subnet, not directly internet-exposed
+#   - NSG restricts inbound traffic to port 80/443 only
+#   - Base image rebuilt weekly via ADO pipeline (auto-picks patches when released)
+#   - Prisma-only node_modules in runtime image (minimal attack surface)
+#
+# Risk accepted by: Osman Khan (Senior DevOps Engineer)
+# Review date: 2026-10-01
+# Re-run: trivy image --severity CRITICAL,HIGH --ignore-unfixed chatterly-api:latest
+
+# Alpine base image OS package CVEs (libssl3/libcrypto3/node packages)
+# Upstream fix pending in node:20-alpine digest
+CVE-2024-21538
+CVE-2025-64756
+CVE-2026-22184
+CVE-2026-23745
+CVE-2026-23950
+CVE-2026-24842
+CVE-2026-26960
+CVE-2026-26996
+CVE-2026-27903
+CVE-2026-27904
+CVE-2026-29786
+CVE-2026-31802
+CVE-2026-40200
+CVE-2026-48815
