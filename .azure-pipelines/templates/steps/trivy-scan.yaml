@@ -10,8 +10,8 @@ parameters:
     type: string
     default: ''
   - name: trivySeverity
-    type: string
-    default: 'HIGH,CRITICAL'
+    - HIGH 
+    - CRITICAL
   - name: exitCodes
     type: string
     default: '1'
@@ -32,6 +32,5 @@ steps:
     trivy image \
       --severity "${{ parameters.trivySeverity }}" \
       --exit-code ${{ parameters.exitCodes }} \
-      --no-progress \
-      "${{ parameters.dockerImage }}"
+      --no-progress "${{ parameters.dockerImage }}"
   displayName: "Trivy Scan"
