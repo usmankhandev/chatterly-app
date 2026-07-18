@@ -13,8 +13,8 @@ parameters:
     type: string
     default: '1'
   - parameters: trivySeverity
-    - HIGH
-    - CRITICAL
+    - name: HIGH
+    - name: CRITICAL
 steps:
 - script: |
     export PATH="$HOME/bin:$PATH"
