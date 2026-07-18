@@ -1,35 +1,39 @@
 parameters:
+- name: runTrivy
+  type: boolean
+  default: true
+- name: acrName
+  type: string
+  default: 'acrchatterlydev'
+- name: dockerImage
+  type: string # no default → caller MUST pass it
+- name: exitCode
+  type: number
+  default: 1
+- name: trivySeverity
+  type: string
+  default: 'CRITICAL,HIGH'
 
-  - name: runTrivy
-    type: boolean
-    default: true
-  - name: acrName
-    type: string
-    default: 'acrchatterlydev'
-  - name: dockerImage
-    type: string
-    default: ''
-  - name: exitCodes
-    type: string
-    default: '1'
-  - parameters: trivySeverity
-    - name: HIGH
-    - name: CRITICAL
 steps:
-- script: |
-    export PATH="$HOME/bin:$PATH"
+- ${{ if eq(parameters.runTrivy, true) }}:
+  - script: |
+      export PATH="$HOME/bin:$PATH"
 
-    if ! command -v trivy >/dev/null 2>&1; then
-      echo "Installing Trivy..."
-      mkdir -p "$HOME/bin"
+      if ! command -v trivy >/dev/null 2>&1; then
+        echo "Installing Trivy..."
+        mkdir -p "$HOME/bin"
+        curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh \
+          | sh -s -- -b "$HOME/bin"
+      fi
 
-      curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b "$HOME/bin"
-    fi
+      trivy --version
 
-    trivy --version
+      IMAGE="${{ parameters.acrName }}.azurecr.io/${{ parameters.dockerImage }}:$(Build.BuildId)"
+      echo "=== Scanning: $IMAGE ==="
 
-    trivy image \
-      --severity "${{ parameters.trivySeverity }}" \
-      --exit-code ${{ parameters.exitCodes }} \
-      --no-progress "${{ parameters.dockerImage }}"
-  displayName: "Trivy Scan"
+      trivy image \
+        --severity "${{ parameters.trivySeverity }}" \
+        --exit-code ${{ parameters.exitCode }} \
+        --no-progress \
+        "$IMAGE"
+    displayName: 'Trivy Scan'
