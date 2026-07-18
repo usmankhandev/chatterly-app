@@ -1,33 +1,37 @@
 parameters:
-  - name: dockerImage
-    type: string
-    default: ''
-  - name: trivySeverity
-    type: string
-    default: 'HIGH, CRITICAL'
-  - name: exitCodes
-    type: string
-    default: '1, 2'
+
   - name: runTrivy
     type: boolean
     default: true
   - name: acrName
     type: string
     default: 'acrchatterlydev'
+  - name: dockerImage
+    type: string
+    default: ''
+  - name: trivySeverity
+    type: string
+    default: 'HIGH,CRITICAL'
+  - name: exitCodes
+    type: string
+    default: '1'
 
 steps:
-  - script: |
+- script: |
+    export PATH="$HOME/bin:$PATH"
 
-      export PATH="$HOME/bin:$PATH"
-      
-      if ! command -v trivy >/dev/null 2>&1; then echo "Installing Trivy..." mkdir -p "$HOME/bin"
-      
-      curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh \ | sh -s -- -b "$HOME/bin" fi
-      
-      trivy --version
-      
-      trivy image \ --severity ${{ parameters.trivySeverity }} \ --exit-code ${{ parameters.exitCodes }} \ --no-progress \ ${{ parameters.dockerImage }}
-    displayName: 'Trivy Scan for ${{parameters.dockerImage}}'
-    continueOnError: false
-  
+    if ! command -v trivy >/dev/null 2>&1; then
+      echo "Installing Trivy..."
+      mkdir -p "$HOME/bin"
 
+      curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b "$HOME/bin"
+    fi
+
+    trivy --version
+
+    trivy image \
+      --severity "${{ parameters.trivySeverity }}" \
+      --exit-code ${{ parameters.exitCodes }} \
+      --no-progress \
+      "${{ parameters.dockerImage }}"
+  displayName: "Trivy Scan"
