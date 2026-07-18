@@ -39,7 +39,7 @@ parameters:
     default: true
   - name: trivySeverity
     type: string
-    default: 'CRITICAL, HIGH'
+    default: 'CRITICAL,HIGH'
 
 stages:
 
