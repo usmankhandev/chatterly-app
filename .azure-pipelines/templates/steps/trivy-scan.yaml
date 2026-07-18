@@ -9,13 +9,10 @@ parameters:
   - name: dockerImage
     type: string
     default: ''
-  - name: trivySeverity
-    - HIGH 
-    - CRITICAL
   - name: exitCodes
     type: string
     default: '1'
-
+  trivySeverity: "HIGH,CRITICAL"
 steps:
 - script: |
     export PATH="$HOME/bin:$PATH"
