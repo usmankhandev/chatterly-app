@@ -18,16 +18,15 @@ parameters:
 steps:
   - script: |
 
-      if ! command -v trivy >/dev/null 2>&1; then
-        echo "Trivy not found, installing..."
-        sudo curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin
-      else
-        echo "Trivy is already installed."
-      fi
+      export PATH="$HOME/bin:$PATH"
+      
+      if ! command -v trivy >/dev/null 2>&1; then echo "Installing Trivy..." mkdir -p "$HOME/bin"
+      
+      curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh \ | sh -s -- -b "$HOME/bin" fi
       
       trivy --version
-
-      trivy image --severity ${{parameters.trivySeverity}} --exit-code ${{parameters.exitCodes}} --no-progress ${{parameters.dockerImage}}
+      
+      trivy image \ --severity ${{ parameters.trivySeverity }} \ --exit-code ${{ parameters.exitCodes }} \ --no-progress \ ${{ parameters.dockerImage }}
     displayName: 'Trivy Scan for ${{parameters.dockerImage}}'
     continueOnError: false
   
