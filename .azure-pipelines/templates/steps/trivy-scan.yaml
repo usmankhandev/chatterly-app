@@ -35,7 +35,7 @@ steps:
         --severity "${{ parameters.trivySeverity }}" \
         --exit-code ${{ parameters.exitCode }} \
         --ignore-unfixed \
-        --ignorefile .trivyignore \
+        --ignorefile  \
         --no-progress \
         "$IMAGE"
     displayName: 'Trivy Scan'

@@ -1,291 +1,514 @@
-# ✅ Project Reorganization - COMPLETE
+# Chatterly
 
-## Summary
+> **AI-native team messaging platform built for engineering teams who demand intelligent communication with complete data sovereignty.**
 
-Your Chatterly backend project has been successfully reorganized with all infrastructure, configuration, and documentation files moved to the `./server` directory. The project root is now clean and ready for client-side code.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Node.js](https://img.shields.io/badge/Node.js-20.x-green.svg)](https://nodejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
+[![Kubernetes](https://img.shields.io/badge/Kubernetes-AKS-326CE5.svg)](https://azure.microsoft.com/en-us/products/kubernetes-service)
+[![Azure DevOps](https://img.shields.io/badge/CI%2FCD-Azure%20DevOps-0078D7.svg)](https://azure.microsoft.com/en-us/products/devops)
 
-## What Was Completed
+---
 
-### 🗂️ File Organization
+## The Problem
 
-**Moved to `./server`:**
+Engineering teams lose **2-3 hours daily** switching between disconnected tools:
 
-- ✅ Dockerfile
-- ✅ docker-compose.yml
-- ✅ .env.redis.example
-- ✅ test-redis.sh
-- ✅ REDIS_CACHING_GUIDE.md
-- ✅ CACHING_INTEGRATION_GUIDE.md
-- ✅ REDIS_QUICKSTART.md
-- ✅ NOTIFICATION_SERVICE_REFACTOR.md
-- ✅ PHASE_1_1_IMPLEMENTATION_SUMMARY.md
-- ✅ PHASE_1_1_COMPLETION_CHECKLIST.md
-- ✅ PHASE_1_IMPLEMENTATION_STATUS.md
+```
+Slack          → chat (no code intelligence)
+GitHub         → code (no discussion threading)
+Jira           → tasks (no real-time communication)
+ChatGPT/Copilot → AI help (no context about your codebase)
+```
 
-**New Documentation Created:**
+None of these tools talk to each other intelligently. Every context switch costs focus, time, and money. And when your team uses SaaS messaging tools, **your conversations, code snippets, and business logic live on someone else's servers.**
 
-- ✅ SETUP_INSTRUCTIONS.md - Complete setup guide (500+ lines)
-- ✅ PROJECT_REORGANIZATION_SUMMARY.md - Full reorganization details
-- ✅ QUICK_REFERENCE.md - Quick commands and API reference
-- ✅ ARCHITECTURE.md - System architecture diagrams and flows
+---
 
-### 📦 Backend Implementation (Phase 1.1)
+## The Solution
 
-**Redis Caching Layer:**
+Chatterly is a **self-hosted, AI-native messaging platform** that unifies team communication with built-in intelligence:
 
-- ✅ Connection pooling with auto-reconnection
-- ✅ Health check mechanism
-- ✅ 512MB memory with LRU eviction
-- ✅ Persistence with append-only file
+- **Semantic search** — find any conversation, decision, or code snippet by meaning, not keywords
+- **Code intelligence** — analyze code snippets inline without leaving the conversation
+- **Auto-summarization** — catch up on what happened while you were away in seconds
+- **Task extraction** — automatically identify action items from conversations
+- **Data sovereignty** — your data stays in your own Kubernetes cluster, always
 
-**Cache Service API:**
+---
 
-- ✅ 12 operations (get, set, delete, TTL, counters, sets, stats)
-- ✅ Cache-aside pattern implementation
-- ✅ TTL management (SHORT, MEDIUM, LONG)
-- ✅ Error resilience with fallback
+## Why Self-Hosted Matters
 
-**User Service Caching:**
+```
+SaaS messaging (Slack, Teams):          Chatterly:
+├── Your data on their servers          ├── Your data on your infrastructure
+├── Compliance nightmares (HIPAA, SOC2) ├── Full audit logs built-in
+├── $12-15/user/month                   ├── Infrastructure cost only
+├── AI add-ons cost extra               ├── AI-native from day one
+└── Vendor lock-in                      └── Open, extensible architecture
+```
 
-- ✅ Profile caching (30-min TTL)
-- ✅ Bulk loading (prevents N+1 queries)
-- ✅ Friends list caching
-- ✅ Auto-invalidation on updates
+Regulated industries (healthcare, fintech, legal, government) can't use SaaS messaging due to compliance requirements. Chatterly solves this with a **one-command Kubernetes deployment** that keeps all data within their own Azure infrastructure.
 
-**Health Endpoints:**
+---
 
-- ✅ `/health` - Service health status
-- ✅ `/ready` - Readiness probe (K8s compatible)
+## Current Status
+
+```
+✅ Production backend deployed on Azure Kubernetes Service (AKS)
+✅ Real-time messaging (Socket.io WebSockets)
+✅ Authentication system (JWT, MFA, OTP via SMS)
+✅ Posts + Comments system (async discussions)
+✅ Social features (friendships, likes, notifications)
+✅ Email + SMS notifications (Mailtrap, Twilio)
+✅ Enterprise CI/CD pipeline (Azure DevOps, templatized)
+✅ Full observability stack (Prometheus, Grafana, Loki, AlertManager)
+✅ Security hardening (Azure Key Vault, Trivy image scanning, RBAC)
+✅ Infrastructure as Code (Terraform, modular, enterprise structure)
+🔄 Frontend in active development (React)
+🔄 AI features in development (RAG, semantic search, pgvector)
+🔄 Microservices migration (Strangler Fig pattern, NestJS)
+```
+
+---
+
+## Architecture
+
+### Current — Production Monolith on AKS
+
+```
+                          Internet
+                             │
+                    ┌────────▼────────┐
+                    │   nginx Ingress  │
+                    │  (Load Balancer) │
+                    └────────┬────────┘
+                             │
+              ┌──────────────▼──────────────┐
+              │         AKS Cluster          │
+              │                              │
+              │  ┌─────────────────────┐    │
+              │  │    Chatterly API     │    │
+              │  │  (Node.js/Express)  │    │
+              │  │   Socket.io WS      │    │
+              │  └──────┬──────┬───────┘    │
+              │         │      │             │
+              │  ┌──────▼──┐ ┌▼──────────┐ │
+              │  │PostgreSQL│ │   Redis   │ │
+              │  │(Prisma)  │ │  (Cache)  │ │
+              │  └──────────┘ └───────────┘ │
+              │                              │
+              │  ┌───────────────────────┐  │
+              │  │   Monitoring Stack    │  │
+              │  │  Prometheus + Grafana │  │
+              │  │  Loki + AlertManager  │  │
+              │  └───────────────────────┘  │
+              └──────────────────────────────┘
+                             │
+              ┌──────────────▼──────────────┐
+              │        Azure Services        │
+              │  ACR │ Key Vault │ DevOps    │
+              └──────────────────────────────┘
+```
+
+### Target — AI-Native Microservices Platform
+
+```
+                          Internet
+                             │
+                    ┌────────▼────────┐
+                    │   Kong Gateway   │
+                    │ (AI + API Layer) │
+                    └────────┬────────┘
+                             │
+              ┌──────────────▼──────────────────────────┐
+              │              AKS Cluster                  │
+              │                                           │
+              │  ┌──────────┐  ┌──────────┐             │
+              │  │   Auth   │  │Messaging │             │
+              │  │ Service  │  │ Service  │             │
+              │  └────┬─────┘  └────┬─────┘             │
+              │       │             │                     │
+              │  ┌────▼─────┐  ┌───▼──────┐             │
+              │  │Notification│ │   AI     │             │
+              │  │ Service  │  │ Service  │             │
+              │  └──────────┘  └────┬─────┘             │
+              │                     │                     │
+              │  ┌──────────────────▼─────────────────┐ │
+              │  │           Event Bus                  │ │
+              │  │    Kafka (domain events + CDC)       │ │
+              │  │    RabbitMQ (service RPC)            │ │
+              │  │    BullMQ (job queues)               │ │
+              │  └──────────────────────────────────────┘ │
+              │                                           │
+              │  ┌──────────┐  ┌──────────┐             │
+              │  │pgvector  │  │ ClickHouse│             │
+              │  │(RAG/     │  │(Analytics)│             │
+              │  │Semantic) │  └──────────┘             │
+              │  └──────────┘                            │
+              └──────────────────────────────────────────┘
+                             │
+              ┌──────────────▼──────────────┐
+              │        Azure Services        │
+              │  Azure OpenAI │ Key Vault    │
+              │  ACR │ DevOps │ Front Door   │
+              └──────────────────────────────┘
+```
+
+---
+
+## Technology Stack
+
+### Backend
+
+| Layer      | Technology              | Purpose                 |
+| ---------- | ----------------------- | ----------------------- |
+| Runtime    | Node.js 20 + TypeScript | Core application        |
+| Framework  | Express.js → NestJS     | HTTP + WebSocket server |
+| Real-time  | Socket.io               | WebSocket messaging     |
+| ORM        | Prisma                  | Database access layer   |
+| Validation | Zod v4                  | Runtime type safety     |
+| Auth       | JWT + bcrypt            | Authentication          |
+| MFA        | TOTP + Twilio OTP       | Multi-factor auth       |
+| Email      | Nodemailer + Mailtrap   | Notifications           |
+| Build      | esbuild (Nx monorepo)   | Fast bundling           |
+
+### Data Layer
+
+| Component  | Technology        | Purpose                        |
+| ---------- | ----------------- | ------------------------------ |
+| Primary DB | PostgreSQL 16     | Relational data                |
+| Cache      | Redis 7           | Session + caching              |
+| Vector DB  | pgvector → Qdrant | Semantic search (planned)      |
+| Analytics  | ClickHouse        | Usage analytics (planned)      |
+| Search     | Azure AI Search   | Full-text + semantic (planned) |
+
+### AI Layer (In Development)
+
+| Component     | Technology              | Purpose             |
+| ------------- | ----------------------- | ------------------- |
+| LLM           | Azure OpenAI (GPT-4o)   | Chat intelligence   |
+| Orchestration | LangChain / LlamaIndex  | RAG pipelines       |
+| Embeddings    | Azure OpenAI Embeddings | Semantic search     |
+| Multi-agent   | AutoGen / CrewAI        | Workflow automation |
+| ML Platform   | MLflow + Azure ML       | Model management    |
+
+### Event Architecture (In Development)
+
+| Component     | Technology   | Purpose                    |
+| ------------- | ------------ | -------------------------- |
+| Domain events | Apache Kafka | CDC + event streaming      |
+| Service RPC   | RabbitMQ     | Synchronous service calls  |
+| Job queues    | BullMQ       | Background jobs + cron     |
+| CDC           | Debezium     | Zero-downtime DB migration |
+
+### Infrastructure
+
+| Component               | Technology               | Purpose                   |
+| ----------------------- | ------------------------ | ------------------------- |
+| Container orchestration | AKS (Kubernetes 1.33)    | Production deployment     |
+| Infrastructure as Code  | Terraform (modular)      | Cloud provisioning        |
+| Package management      | Helm charts              | Kubernetes deployments    |
+| Container registry      | Azure Container Registry | Docker image storage      |
+| Secrets management      | Azure Key Vault + CSI    | Production secrets        |
+| Service mesh            | Istio (planned)          | mTLS + traffic management |
+
+### Observability
+
+| Component  | Technology               | Purpose                       |
+| ---------- | ------------------------ | ----------------------------- |
+| Metrics    | Prometheus + prom-client | Application + infra metrics   |
+| Dashboards | Grafana (Golden Signals) | Visualization                 |
+| Logs       | Loki + Promtail          | Log aggregation               |
+| Alerts     | AlertManager → Slack     | Incident notification         |
+| Tracing    | OpenTelemetry + Tempo    | Distributed tracing (planned) |
+| Uptime     | Prometheus SLOs          | Availability tracking         |
+
+### CI/CD Pipeline
+
+| Component         | Technology                 | Purpose                   |
+| ----------------- | -------------------------- | ------------------------- |
+| Pipeline          | Azure DevOps (templatized) | Build + deploy automation |
+| Security scanning | Trivy                      | CVE detection             |
+| Image registry    | ACR                        | Artifact storage          |
+| Deployment        | Helm + --atomic flag       | Zero-downtime deploys     |
+| GitOps            | ArgoCD (in progress)       | Declarative deployments   |
+
+---
+
+## Production Infrastructure Details
+
+### AKS Cluster Configuration
+
+```
+Cluster:     aks-chatterly-dev (Kubernetes 1.33)
+Node pools:  2x Standard_DS2_v2 (app workloads)
+Networking:  Azure CNI + nginx Ingress
+Storage:     Azure managed-csi StorageClass
+Registry:    acrchatterlydev.azurecr.io
+```
+
+### Security Posture
+
+```
+✅ Secrets: Azure Key Vault CSI driver (zero secrets in Git)
+✅ Images: Trivy scanning with CRITICAL/HIGH gate
+✅ Auth: Workload Identity (no static credentials)
+✅ Network: NSG + nginx Ingress TLS termination
+✅ RBAC: Namespace-scoped roles (in progress)
+✅ Supply chain: .trivyignore with documented risk acceptance
+```
+
+### Monitoring Stack
+
+```
+✅ Prometheus: scraping app metrics every 15s
+✅ Grafana: Golden Signals dashboard (Traffic, Latency, Errors, Saturation)
+✅ Loki: pod log aggregation across all namespaces
+✅ AlertManager: routing to Slack (PodCrashLooping, HighErrorRate, PVCAlmostFull)
+✅ ServiceMonitor: auto-discovery of new services
+```
+
+### CI/CD Pipeline Stages
+
+```
+1. Install dependencies (npm ci + Prisma generate)
+2. Build (Nx esbuild — single bundled index.cjs)
+3. Docker build (multi-stage, minimal runtime image)
+4. Trivy security scan (blocks on CRITICAL/HIGH with fix)
+5. Push to ACR (with Build.BuildId immutable tag)
+6. Helm deploy (--atomic --wait, auto-rollback on failure)
+7. Health check verification
+```
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+```bash
+node >= 20.x
+docker >= 24.x
+kubectl >= 1.28
+helm >= 3.12
+terraform >= 1.6
+```
+
+### Local Development
+
+```bash
+# Clone the repository
+git clone https://github.com/usmankhandev/chatterly-app
+cd chatterly-app
+
+# Install dependencies
+npm install
+
+# Start local infrastructure
+docker compose up -d
+
+# Run database migrations
+npx nx run api:migrate:dev
+
+# Start the API
+npx nx serve api
+```
+
+### Deploy to Kubernetes
+
+```bash
+# Provision Azure infrastructure
+cd terraform/environments/dev
+terraform init
+terraform apply
+
+# Deploy application via Helm
+helm upgrade --install chatterly-dev ./k8s/chatterly \
+  --namespace chatterly-dev \
+  --create-namespace \
+  -f k8s/chatterly/values-dev.yaml
+
+# Verify deployment
+kubectl get pods -n chatterly-dev
+curl http://<INGRESS_IP>/health
+```
+
+### Deploy Monitoring Stack
+
+```bash
+# Install kube-prometheus-stack
+helm install kube-prometheus-stack \
+  prometheus-community/kube-prometheus-stack \
+  --namespace monitoring \
+  --create-namespace
+
+# Install Loki
+helm install loki grafana/loki \
+  --namespace monitoring \
+  --set loki.auth_enabled=false
+
+# Install Promtail
+helm install promtail grafana/promtail \
+  --namespace monitoring
+```
+
+---
 
 ## Project Structure
 
 ```
-chatterly/
-├── server/                          # ← ALL BACKEND HERE
-│   ├── src/
-│   │   ├── config/
-│   │   │   ├── redisClient.ts      # ← Redis manager with pooling
-│   │   │   └── prismaClient.ts
-│   │   ├── services/
-│   │   │   ├── cache.service.ts    # ← Cache API (12 ops)
-│   │   │   ├── user.service.ts     # ← User caching
-│   │   │   ├── auth.service.ts
-│   │   │   ├── post.service.ts
-│   │   │   ├── comment.service.ts
-│   │   │   ├── like.service.ts
-│   │   │   ├── friendship.service.ts
-│   │   │   ├── notification.service.ts
-│   │   │   ├── feed.service.ts
-│   │   │   ├── email.service.ts
-│   │   │   └── sms.service.ts
-│   │   ├── app.ts                  # ← Health endpoints
-│   │   └── index.ts                # ← Redis init on startup
-│   ├── prisma/
-│   │   ├── schema.prisma           # ← Database schema
-│   │   └── migrations/
-│   ├── tests/
-│   ├── Dockerfile                  # ← Now in server/
-│   ├── docker-compose.yml          # ← Now in server/
-│   ├── package.json
-│   └── DOCUMENTATION/
-│       ├── SETUP_INSTRUCTIONS.md
-│       ├── QUICK_REFERENCE.md
-│       ├── ARCHITECTURE.md
-│       ├── REDIS_CACHING_GUIDE.md
-│       ├── CACHING_INTEGRATION_GUIDE.md
-│       ├── REDIS_QUICKSTART.md
-│       ├── PHASE_1_1_IMPLEMENTATION_SUMMARY.md
-│       ├── PHASE_1_1_COMPLETION_CHECKLIST.md
-│       ├── PHASE_1_IMPLEMENTATION_STATUS.md
-│       └── PROJECT_REORGANIZATION_SUMMARY.md
-│
-└── (ROOT CLEAN - READY FOR CLIENT CODE)
-    └── Future: Angular/React/Vue frontend
+chatterly-app/
+├── apps/
+│   ├── api/                    # Express.js backend (current)
+│   │   ├── src/
+│   │   │   ├── routes/         # Auth, posts, comments, notifications
+│   │   │   ├── services/       # Business logic
+│   │   │   ├── middleware/     # Auth, metrics, error handling
+│   │   │   └── websocket/      # Socket.io real-time layer
+│   │   ├── prisma/             # Database schema + migrations
+│   │   └── Dockerfile          # Multi-stage, minimal runtime
+│   ├── gateway/                # NestJS API gateway (in development)
+│   └── websocket/              # NestJS WebSocket service (planned)
+├── libs/
+│   ├── observability/          # Shared Prometheus metrics library
+│   └── nest-observability/     # NestJS metrics adapter (planned)
+├── k8s/
+│   └── chatterly/              # Helm chart
+│       ├── templates/
+│       │   ├── api/            # Deployment, Service, ServiceMonitor
+│       │   ├── postgres/       # StatefulSet, PVC
+│       │   ├── redis/          # Deployment, PVC
+│       │   ├── ingress/        # nginx Ingress
+│       │   └── monitoring/     # PrometheusRules, AlertmanagerConfig
+│       ├── values.yaml         # Default values
+│       ├── values-dev.yaml     # Development overrides
+│       └── values-qa.yaml      # QA overrides
+├── terraform/
+│   ├── modules/
+│   │   ├── aks/               # AKS cluster module
+│   │   ├── acr/               # Container registry module
+│   │   ├── keyvault/          # Key Vault + secrets module
+│   │   └── networking/        # VNet, NSG, subnets module
+│   └── environments/
+│       └── dev/               # Dev environment composition
+├── .azure-pipelines/
+│   └── templates/
+│       ├── stages/            # build-node.yml (reusable)
+│       └── steps/             # install, build, trivy, push, deploy
+├── azure-pipelines.yml        # Root pipeline (15 lines, extends template)
+└── .trivyignore               # Documented CVE risk acceptance
 ```
-
-## How to Use Now
-
-### ⚡ Start Backend
-
-```bash
-cd server/
-docker compose up -d
-```
-
-Services will be available at:
-
-- Server: http://localhost:3001
-- Database: localhost:5433
-- Redis: localhost:6379
-
-### 🧪 Run Tests
-
-```bash
-cd server/
-npm run test
-```
-
-### 📚 Read Documentation
-
-All documentation is now in `server/` with clear filenames:
-
-1. **Start here:** `SETUP_INSTRUCTIONS.md` (complete setup guide)
-2. **Quick reference:** `QUICK_REFERENCE.md` (commands and patterns)
-3. **Understanding:** `ARCHITECTURE.md` (system design)
-4. **Deep dive:** `REDIS_CACHING_GUIDE.md` (caching patterns)
-5. **Integration:** `CACHING_INTEGRATION_GUIDE.md` (9 templates)
-6. **Status:** `PHASE_1_IMPLEMENTATION_STATUS.md` (roadmap)
-
-## Key Benefits
-
-✅ **Clean Project Root** - Ready for Angular/React/Vue client code
-✅ **Self-Contained Backend** - All backend in one place
-✅ **Easy Docker Management** - Run from `./server` directory
-✅ **Clear Documentation** - No scattered files
-✅ **Professional Structure** - Industry best practices
-✅ **Scalable Organization** - Easy to add more services
-
-## What's Next
-
-### Phase 1.2 - Request Rate Limiting (5-10 days)
-
-- Install `rate-limiter-flexible` package
-- Create rate limit middleware
-- Apply per-route policies:
-  - Auth endpoints: 5 req/min
-  - API endpoints: 100 req/min
-  - Public endpoints: 300 req/min
-
-### Phase 2 - Message Queue (10-15 days)
-
-- Implement Bull/RabbitMQ
-- Queue email notifications
-- Queue SMS notifications
-- Async processing
-
-### Phase 3+ - Advanced Features
-
-- Elasticsearch integration (Phase 3)
-- Circuit breakers (Phase 4)
-- RBAC (Phase 5)
-- GraphQL (Phase 6)
-- WebSocket optimization (Phase 7)
-- Kubernetes (Phase 8)
-- Microservices (Phase 9)
-- Advanced monitoring (Phase 10)
-
-See `server/PHASE_1_IMPLEMENTATION_STATUS.md` for full roadmap.
-
-## Quick Command Reference
-
-```bash
-# Enter server directory (all commands from here)
-cd server/
-
-# Docker operations
-docker compose up -d                # Start all services
-docker compose ps                   # Check status
-docker compose logs -f              # View logs
-docker compose down                 # Stop services
-docker compose down -v              # Stop + remove data
-
-# Testing
-npm run test                        # Run all tests
-npm run test:coverage              # With coverage
-npm run test:watch                 # Watch mode
-
-# Development
-npm run dev                         # Local dev (with hot reload)
-npm install                        # Install dependencies
-
-# Database
-npx prisma studio                  # Visual DB explorer
-npx prisma migrate dev --name NAME # Create migration
-npx prisma migrate deploy          # Apply migrations
-
-# Health checks
-curl http://localhost:3001/health  # Service health
-curl http://localhost:3001/ready   # Readiness probe
-
-# Redis
-docker compose exec redis redis-cli # Redis CLI
-docker compose exec redis redis-cli ping
-```
-
-## Important Notes
-
-1. **All backend commands run from `./server`** directory
-2. **Root directory is now clean** for client code
-3. **Docker composes from `./server`** - paths are already configured
-4. **All docs are in `./server`** - organized and easy to find
-5. **PostgreSQL runs on port 5433** (mapped from 5432) to avoid conflicts
-
-## Files Location Quick Link
-
-| Need                  | File                                | Location |
-| --------------------- | ----------------------------------- | -------- |
-| Setup help            | SETUP_INSTRUCTIONS.md               | server/  |
-| Quick commands        | QUICK_REFERENCE.md                  | server/  |
-| System design         | ARCHITECTURE.md                     | server/  |
-| Redis deep dive       | REDIS_CACHING_GUIDE.md              | server/  |
-| How to cache services | CACHING_INTEGRATION_GUIDE.md        | server/  |
-| Redis commands        | REDIS_QUICKSTART.md                 | server/  |
-| What was done         | PHASE_1_1_IMPLEMENTATION_SUMMARY.md | server/  |
-| Roadmap               | PHASE_1_IMPLEMENTATION_STATUS.md    | server/  |
-| Docker config         | docker-compose.yml                  | server/  |
-| Server config         | Dockerfile                          | server/  |
-
-## Verification Checklist
-
-- ✅ Root directory is clean (no .md, .yml, Dockerfile)
-- ✅ All files moved to `server/`
-- ✅ Docker compose runs from `server/`
-- ✅ All documentation in `server/`
-- ✅ New setup guides created
-- ✅ Architecture documented
-- ✅ Quick reference available
-- ✅ Redis caching implemented
-- ✅ Health endpoints configured
-- ✅ Tests passing
-
-## Support Resources
-
-**If you need to:**
-
-1. **Set up the project** → Read `SETUP_INSTRUCTIONS.md`
-2. **See available commands** → Check `QUICK_REFERENCE.md`
-3. **Understand the system** → Review `ARCHITECTURE.md`
-4. **Implement caching** → Follow `CACHING_INTEGRATION_GUIDE.md`
-5. **Use Redis commands** → See `REDIS_QUICKSTART.md`
-6. **Check progress** → View `PHASE_1_IMPLEMENTATION_STATUS.md`
-7. **Troubleshoot issues** → See `SETUP_INSTRUCTIONS.md` → Troubleshooting
 
 ---
 
-## Status
+## Roadmap
 
-```
-✅ Phase 1.1: Redis Caching - COMPLETE
-✅ Project Reorganization - COMPLETE
-✅ Documentation - COMPLETE
-⏭️  Phase 1.2: Rate Limiting - READY TO START
-```
+### Phase 1 — Production Hardening (Current)
 
-**Backend Status:** Production-ready foundation established
-**Next Task:** Rate Limiting middleware (Phase 1.2)
-**Estimated Time:** 5-10 days
-**Difficulty:** Senior-level implementation
+- [x] AKS deployment with Terraform
+- [x] Helm chart with multi-environment support
+- [x] Templatized Azure DevOps CI/CD pipeline
+- [x] Full observability stack (Prometheus, Grafana, Loki)
+- [x] Security hardening (Key Vault, Trivy, RBAC)
+- [ ] ArgoCD GitOps deployment
+- [ ] Multiple namespaces (dev, qa, staging, prod)
+- [ ] HPA + PodDisruptionBudgets
+- [ ] Network Policies
+
+### Phase 2 — AI Integration
+
+- [ ] Azure OpenAI integration (GPT-4o)
+- [ ] RAG pipeline (pgvector → Qdrant)
+- [ ] Semantic search across conversations
+- [ ] Message summarization
+- [ ] Code analysis inline
+- [ ] LiteLLM AI gateway
+
+### Phase 3 — Microservices Migration
+
+- [ ] NestJS auth-service (Strangler Fig)
+- [ ] NestJS messaging-service
+- [ ] Kafka event bus (CDC via Debezium)
+- [ ] RabbitMQ service RPC
+- [ ] BullMQ job queues
+- [ ] CloudNativePG operator (replace StatefulSet)
+
+### Phase 4 — Scale & Enterprise
+
+- [ ] React frontend
+- [ ] Multi-region deployment (Azure Front Door)
+- [ ] Istio service mesh (mTLS)
+- [ ] Thanos multi-cluster monitoring
+- [ ] Chaos engineering (Chaos Mesh)
+- [ ] SOC2 compliance hardening
 
 ---
 
-**Ready to proceed with Phase 1.2?**
+## Key Engineering Decisions
 
-Commands to start:
+| Decision        | Choice                          | Rationale                                                           |
+| --------------- | ------------------------------- | ------------------------------------------------------------------- |
+| Build tool      | esbuild (not tsc)               | Single bundled artifact, 4x faster, no runtime module resolution    |
+| Monorepo        | Nx                              | Shared libs (observability), incremental builds, affected detection |
+| Secrets         | Azure Key Vault CSI             | Zero secrets in Git, rotation without restart, audit trail          |
+| Migrations      | Strangler Fig + Debezium        | Zero-downtime microservices migration via WAL-based CDC             |
+| Messaging       | Kafka + RabbitMQ                | Kafka for domain events/CDC, RabbitMQ for synchronous RPC           |
+| Deploy strategy | Helm --atomic                   | Auto-rollback on failure, no stuck partial deploys                  |
+| CVE policy      | --ignore-unfixed + .trivyignore | Block actionable CVEs, document accepted risks                      |
+
+---
+
+## Real Production Incidents (Postmortem Bank)
+
+These are real incidents from building Chatterly — each one is a debugged, documented learning:
+
+| Incident                           | Root Cause                                            | Resolution                                                    |
+| ---------------------------------- | ----------------------------------------------------- | ------------------------------------------------------------- |
+| `kubectl logs` returning 504       | NSG blocking kubelet port 10250                       | Added inbound NSG rule for AKS required ports                 |
+| CoreDNS `bad address postgres-svc` | Same NSG blocking VNet DNS (port 53)                  | Allowed VNet-internal traffic before deny-internet rule       |
+| Postgres CrashLoopBackOff          | CSI disk mounts to root, `lost+found` blocking initdb | Set `PGDATA=/var/lib/postgresql/data/pgdata` subdirectory     |
+| ACR ImagePullBackOff               | Kubelet identity missing AcrPull role                 | Assigned AcrPull to kubelet managed identity                  |
+| Prisma enums undefined at runtime  | Dockerfile copied un-generated Prisma client          | Copy node_modules from builder stage (post prisma generate)   |
+| esbuild MODULE_NOT_FOUND           | @nx/webpack/plugin shadowing build target             | Removed webpack plugin from nx.json plugins array             |
+| Trivy blocking pipeline            | node:20-alpine libssl3 CVEs                           | Documented in .trivyignore with risk acceptance + review date |
+
+---
+
+## Contributing
+
+Chatterly is currently in active development by a solo founder. Contributions, feedback, and architectural suggestions are welcome.
 
 ```bash
-cd server/
-npm install rate-limiter-flexible
-npm run dev
+# Fork and clone
+git clone https://github.com/usmankhandev/chatterly-app
+
+# Create feature branch
+git checkout -b feature/your-feature
+
+# Make changes and test
+npx nx affected --target=build
+npx nx affected --target=test
+
+# Submit PR against development branch
 ```
 
-Good luck! 🚀
+---
+
+## License
+
+MIT License — see [LICENSE](LICENSE) for details.
+
+---
+
+## About the Builder
+
+Built by **Muhammad Usman Pervaiz Khan** — Senior DevOps Engineer with 6 years of experience in backend engineering and cloud infrastructure. Chatterly is both a real product and a living portfolio demonstrating production-grade DevOps, Kubernetes, and AI platform engineering.
+
+- GitHub: [@usmankhandev](https://github.com/usmankhandev)
+- Email: chatterly.app@outlook.com
+- Location: Lahore, Pakistan
+
+---
+
+_Chatterly — Because your team's knowledge shouldn't live in someone else's cloud._
