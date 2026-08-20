@@ -63,13 +63,22 @@ redis:
 
 # Ingress
 ingress:
-  enabled: true
+  enabled: false
   className: nginx
   host: ""
 
 # Key Vault
 keyVault:
-  enabled: true
+  enabled: false
   name: kv-chatterly-dev
   tenantId: 229929b3-9d7d-48ef-b948-b175d426ee74
   identityClientId: 0cc634fd-dba5-4e58-b816-44850fed678b
+
+# Add this to your values.yaml
+monitoring:
+  serviceMonitor:
+    enabled: false
+  prometheusRule:
+    enabled: false
+  alertmanagerConfig:
+    enabled: false

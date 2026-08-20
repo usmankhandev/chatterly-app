@@ -1,3 +1,4 @@
+{{- if .Values.monitoring.prometheusRules.enabled }}
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
@@ -134,3 +135,4 @@ spec:
           annotations:
             summary: "Node {{`{{`}} $labels.node {{`}}`}} in namespace {{`{{`}} $labels.namespace {{`}}`}} has Kubelet not ready"
             description: "Node {{`{{`}} $labels.node {{`}}`}} in namespace {{`{{`}} $labels.namespace {{`}}`}} has had its Kubelet in a NotReady state for more than 5 minutes."
+{{- end }}
