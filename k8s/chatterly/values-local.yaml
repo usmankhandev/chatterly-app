@@ -1,0 +1,14 @@
+# Local k3d overrides — disables Azure-specific dependencies
+secretProvider:
+  enabled: false
+
+monitoring:
+  serviceMonitor:
+    enabled: false
+  prometheusRule:
+    enabled: false
+  alertmanagerConfig:
+    enabled: false
+
+ingress:
+  enabled: false
