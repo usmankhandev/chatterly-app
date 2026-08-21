@@ -1,4 +1,4 @@
-{{- if .Values.monitoring.alertmanagerConfig.enabled}}
+{{- if .Values.monitoring.alertmanagerConfig.enabled }}
 apiVersion: monitoring.coreos.com/v1alpha1
 kind: AlertmanagerConfig
 metadata:
@@ -56,5 +56,4 @@ spec:
         *Severity:* {{ "{{" }} .CommonLabels.severity {{ "}}" }}
         *Namespace:* {{ "{{" }} .CommonLabels.namespace {{ "}}" }}
         *Description:* {{ "{{" }} .CommonAnnotations.description {{ "}}" }}
-
-{{-end}}
+{{- end }}

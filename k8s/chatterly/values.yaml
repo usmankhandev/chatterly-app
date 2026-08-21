@@ -82,3 +82,5 @@ monitoring:
     enabled: false
   alertmanagerConfig:
     enabled: false
+  secretProviderClass:
+    enabled: false
