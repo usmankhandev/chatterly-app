@@ -38,7 +38,7 @@ api:
 postgres:
   image: postgres:16-alpine
   storage: 1Gi
-  storageClass: managed-csi
+  storageClass: /var/lib/rancher/k3s/storage/
   resources:
     requests:
       memory: "256Mi"
@@ -51,7 +51,7 @@ postgres:
 redis:
   image: redis:7-alpine
   storage: 1Gi
-  storageClass: managed-csi
+  storageClass: /var/lib/rancher/k3s/storage/
   maxmemory: 256mb
   resources:
     requests:
