@@ -26,6 +26,12 @@ clover.xml
 # Jest
 jest-stare/
 
+
+# k8s local secrets
+
+k8s/chatterly/values-secrets.yaml
+
+
 # OS
 .DS_Store
 Thumbs.db
@@ -92,3 +98,4 @@ libs/**/src/**/*.js
 libs/**/src/**/*.d.ts
 dist/
 tmp/
+vite.config.*.timestamp*

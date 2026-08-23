@@ -84,3 +84,28 @@ monitoring:
     enabled: false
   secretProviderClass:
     enabled: false
+
+localSecrets:
+  DATABASE_URL: ""
+  POSTGRES_USER: ""
+  POSTGRES_PASSWORD: ""
+  REDIS_URL: ""
+  POSTGRES_DB: ""
+  PORT: ""
+
+  LOG_LEVEL: ""
+  JWT_ACCESS_SECRET: ""
+  JWT_REFRESH_SECRET: ""
+  JWT_ACCESS_EXPIRE: ""
+  JWT_REFRESH_EXPIRE: ""
+  # Email/SMTP Configuration
+  EMAIL_HOST: ""
+  EMAIL_PORT: ""
+  EMAIL_USER: ""
+  EMAIL_PASS: ""
+  EMAIL_FROM: ""
+  # SMS/Twilio Configuration
+  TWILIO_ACCOUNT_SSID: ""
+  TWILIO_AUTH_TOKEN: ""
+  TWILIO_PHONE_NUMBER: ""
+  TWILIO_RECOVERY_NUMBER: ""
