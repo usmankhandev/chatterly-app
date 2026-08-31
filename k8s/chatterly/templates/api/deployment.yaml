@@ -41,7 +41,7 @@ spec:
           command:
             - sh
             - -c
-            - node node_modules/prisma/build/index.js migrate deploy --schema=./prisma/schema.prisma
+            - node /app/node_modules/prisma/build/index.js migrate deploy --schema=./prisma/schema.prisma
           env:
             - name: DATABASE_URL
               valueFrom:
