@@ -3,4 +3,4 @@ environment: dev
 
 api:
   image:
-    tag: latest
+    tag: dev-latest

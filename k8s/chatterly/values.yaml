@@ -13,8 +13,8 @@ slack:
 # API
 api:
   image:
-    repository: acrchatterlydev.azurecr.io/chatterly-api
-    tag: latest
+    repository: osmankhandev/chatterly-api
+    tag: dev-latest
     pullPolicy: Always
   replicas: 1
   port: 3001
