@@ -4,8 +4,6 @@ kind: Ingress
 metadata:
   name: chatterly-ingress
   namespace: {{ .Values.namespace }}
-  annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
   ingressClassName: {{ .Values.ingress.className }}
   rules:
@@ -18,4 +16,12 @@ spec:
                 name: api-svc
                 port:
                   number: {{ .Values.api.port }}
+          - path: /health
+            pathType: Prefix
+            backend: 
+              service:  
+                name: api-svc
+                port:
+                  number: {{ .Values.api.port }}
+
 {{- end }}

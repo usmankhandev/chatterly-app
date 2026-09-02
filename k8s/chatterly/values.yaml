@@ -63,8 +63,8 @@ redis:
 
 # Ingress
 ingress:
-  enabled: false
-  className: nginx
+  enabled: true
+  className: kong
   host: ""
 
 # Key Vault
