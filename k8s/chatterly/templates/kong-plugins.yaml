@@ -1,0 +1,12 @@
+apiVersion: configuration.konghq.com/v1
+kind: KongPlugin
+metadata:
+  name: rate-limiting
+  namespace: {{ .Values.Namespace }}
+plugin: rate-limiting
+config: 
+  minute: {{.Values.kong.rateLimit.minute}}
+  hour: {{.Values.kong.rateLimit.hour}}
+  second: {{.Values.kong.rateLimit.second}}
+  policy: local
+  hide_client_headers: false

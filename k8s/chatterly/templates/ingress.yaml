@@ -4,6 +4,8 @@ kind: Ingress
 metadata:
   name: chatterly-ingress
   namespace: {{ .Values.namespace }}
+  annotations:
+    konghq.com/plugins: rate-limiting
 spec:
   ingressClassName: {{ .Values.ingress.className }}
   rules:

@@ -67,6 +67,12 @@ ingress:
   className: kong
   host: ""
 
+kong:
+  rateLimit:
+    minute: 60
+    hour: 1000
+    second: 5
+
 # Key Vault
 keyVault:
   enabled: false
